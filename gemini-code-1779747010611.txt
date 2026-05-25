@@ -1,0 +1,11 @@
+ecommerce-devops-project/
+├── .github/                    # Step 5: GitHub Actions CI/CD workflows will live here
+├── apps/                       # Step 2: All application source code
+│   ├── frontend-ui/            # React.js application
+│   ├── catalog-service/        # Node.js stateless API
+│   └── cart-service/           # Node.js API (will connect to Redis later)
+├── infrastructure/             # Step 4 & 6: Infrastructure as Code (IaC)
+│   ├── k8s-manifests/          # Kubernetes YAML files (Deployments, Services)
+│   └── argocd/                 # ArgoCD Application definitions for GitOps
+├── .gitignore                  # Standard gitignore (node_modules, .env, etc.)
+└── README.md                   # Project documentation
