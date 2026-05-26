@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ecommerce-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    # The URL of your GitHub repository
+    repoURL: 'https://github.com/neyo55/ecommerce-devops-project.git'
+    targetRevision: HEAD
+    # The specific folder ArgoCD should monitor for Kubernetes YAML files
+    path: infrastructure/k8s-manifests
+  destination:
+    # Deploy to the same cluster ArgoCD is running in
+    server: 'https://kubernetes.default.svc'
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true     # If you delete a file in Git, delete the pod in K8s
+      selfHeal: true  # If someone manually edits K8s, revert it back to match Git
