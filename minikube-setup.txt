@@ -1,0 +1,161 @@
+Excellent. With Minikube and `kubectl` ready, we can move directly into the heart of Kubernetes orchestration.
+
+In this step, we will write **Manifests** (YAML files). These files are the "declarative" instructions telling Kubernetes exactly how we want our application to run. We will define two main concepts for each app:
+
+1. **Deployment:** Tells Kubernetes which Docker image to use, how many copies (replicas) to run, and how to restart them if they crash.
+2. **Service:** Acts as an internal Load Balancer so our pods can communicate with each other, and exposes our frontend to the outside world.
+
+Here is your step-by-step guide to deploying to Minikube.
+
+---
+
+### 1. Start Minikube & Load Your Local Images
+
+Kubernetes runs in its own isolated virtual environment. By default, it tries to download images from the internet (Docker Hub). Since we built our `frontend-ui:1.0` and `catalog-service:1.0` images locally on your computer, we need to load them directly into Minikube's brain.
+
+Run these commands in your terminal:
+
+```bash
+# 1. Start your local Kubernetes cluster
+minikube start
+
+# 2. Load the Node.js backend image into Minikube
+minikube image load catalog-service:1.0
+
+# 3. Load the React frontend image into Minikube
+minikube image load frontend-ui:1.0
+
+```
+
+### 2. Create the Infrastructure Folders
+
+We need to place our Kubernetes YAML files in the correct folder based on the monorepo structure we defined in Step 1.
+
+Navigate to your project root (`ecommerce-devops-project`) and run:
+
+```bash
+# Create the necessary directories
+mkdir -p infrastructure/k8s-manifests
+cd infrastructure/k8s-manifests
+
+```
+
+### 3. Write the Catalog Service Manifest
+
+Inside the `k8s-manifests` folder, create a file named `catalog-api.yaml` and paste the following code.
+
+*Notice the `imagePullPolicy: Never`—this is a crucial local testing rule that forces Kubernetes to use the image we just loaded via Minikube instead of looking for it online.*
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-deployment
+  labels:
+    app: catalog
+spec:
+  replicas: 2 # Let's run 2 copies of the backend for high availability testing
+  selector:
+    matchLabels:
+      app: catalog
+  template:
+    metadata:
+      labels:
+        app: catalog
+    spec:
+      containers:
+      - name: catalog
+        image: catalog-service:1.0
+        imagePullPolicy: Never 
+        ports:
+        - containerPort: 3001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog-service
+spec:
+  type: ClusterIP # ClusterIP means it is only accessible from INSIDE the cluster
+  selector:
+    app: catalog
+  ports:
+  - port: 3001
+    targetPort: 3001
+
+```
+
+### 4. Write the Frontend UI Manifest
+
+In the same folder, create a second file named `frontend-ui.yaml` and paste the following code:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+  labels:
+    app: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: frontend-ui:1.0
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  type: NodePort # NodePort exposes this service to the outside world (your browser)
+  selector:
+    app: frontend
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30080 # We will access the app via this port
+
+```
+
+### 5. Apply the Manifests to Kubernetes
+
+Now we use `kubectl` to send these files to the Kubernetes API. Run these commands from inside your `k8s-manifests` folder:
+
+```bash
+# Apply both YAML files
+kubectl apply -f catalog-api.yaml
+kubectl apply -f frontend-ui.yaml
+
+# Watch your pods spin up in real-time (Press Ctrl+C to exit this view when they say "Running")
+kubectl get pods -w
+
+```
+
+### 6. Access the Application
+
+Since we used a `NodePort` service for the frontend, Minikube provides a built-in command to generate a URL to view your application.
+
+Run this command:
+
+```bash
+minikube service frontend-service
+
+```
+
+This will automatically open your default web browser and route you directly into your Kubernetes cluster to see your React application running.
+
+---
+
+### Phase 1: The Master Roadmap
+
+Once you have verified the deployment is working, commit your new `infrastructure` folder to GitHub. We have officially deployed to a local Kubernetes cluster!

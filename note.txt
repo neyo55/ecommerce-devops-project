@@ -1,0 +1,34 @@
+# Command to build the frontend
+ docker build -t frontend-ui:1.0 .
+
+# Command to start the frontend 
+ docker run -p 8088:80 frontend-ui:1.0
+
+
+# Command to build the backend
+docker build -t catalog-service:1.0 .
+
+# Command to start the backend 
+docker run -p 3001:3001 catalog-service:1.0
+
+
+
+# Minikube commands
+# 1. Start your local Kubernetes cluster
+minikube start
+
+# 2. Load the Node.js backend image into Minikube
+minikube image load catalog-service:1.0
+
+# 3. Load the React frontend image into Minikube
+minikube image load frontend-ui:1.0
+
+# Apply both YAML files
+kubectl apply -f catalog-api.yaml
+kubectl apply -f frontend-ui.yaml
+
+# Watch your pods spin up in real-time (Press Ctrl+C to exit this view when they say "Running")
+kubectl get pods -w
+
+# Command to generate a URL for the NodePort
+minikube service frontend-service
