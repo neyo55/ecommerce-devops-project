@@ -32,3 +32,29 @@ kubectl get pods -w
 
 # Command to generate a URL for the NodePort
 minikube service frontend-service
+
+# Command to decrypt Argocd default password 
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+
+# command to apply the argocd application manifest 
+kubectl apply -f infrastructure/argocd/application.yaml
+
+
+
+# commands to run to start the project (Powershell)
+minikube start
+
+# Run this in powershell after the below commands has been run 
+minikube service frontend-service
+
+
+# run this in VSCode terminal
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+
+view on the browser https://localhost:8080
+
+
+
+
