@@ -16,8 +16,8 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: frontend-ui:1.0
-        imagePullPolicy: Never
+        image: neyo55/frontend-ui:latest # Updated to Docker Hub image
+        imagePullPolicy: Always          # Changed to Always
         ports:
         - containerPort: 80
 ---
@@ -26,10 +26,10 @@ kind: Service
 metadata:
   name: frontend-service
 spec:
-  type: NodePort # NodePort exposes this service to the outside world (your browser)
+  type: NodePort
   selector:
     app: frontend
   ports:
   - port: 80
     targetPort: 80
-    nodePort: 30080 # We will access the app via this port
+    nodePort: 30080
