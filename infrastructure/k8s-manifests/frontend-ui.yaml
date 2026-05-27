@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: neyo55/frontend-ui:7226d9d
+        image: neyo55/frontend-ui:1fba384
         imagePullPolicy: Always          # Changed to Always
         ports:
         - containerPort: 80
