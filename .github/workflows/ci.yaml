@@ -42,6 +42,14 @@ jobs:
           
           sed -i "s|image: ${{ secrets.DOCKER_USERNAME }}/frontend-ui:.*|image: ${{ secrets.DOCKER_USERNAME }}/frontend-ui:$IMAGE_TAG|g" infrastructure/k8s-manifests/frontend-ui.yaml
 
+      - name: Build and Push Cart Service
+        run: |
+          IMAGE_TAG=${GITHUB_SHA::7}
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/cart-service:$IMAGE_TAG ./apps/cart-service
+          docker push ${{ secrets.DOCKER_USERNAME }}/cart-service:$IMAGE_TAG
+          
+          sed -i "s|image: ${{ secrets.DOCKER_USERNAME }}/cart-service:.*|image: ${{ secrets.DOCKER_USERNAME }}/cart-service:$IMAGE_TAG|g" infrastructure/k8s-manifests/cart-api.yaml
+
       - name: Commit and Push GitOps Manifests
         run: |
           git config --global user.name "github-actions[bot]"

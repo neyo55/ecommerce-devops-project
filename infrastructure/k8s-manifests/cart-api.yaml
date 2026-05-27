@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cart-deployment
+  labels:
+    app: cart
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cart
+  template:
+    metadata:
+      labels:
+        app: cart
+    spec:
+      containers:
+      - name: cart
+        # Make sure to replace neyo55 with your actual Docker Hub username!
+        image: neyo55/cart-service:latest 
+        imagePullPolicy: Always
+        env:
+        - name: REDIS_URL
+          value: "redis://redis-service:6379" # Connects to the Redis ClusterIP Service
+        ports:
+        - containerPort: 3002
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cart-service
+spec:
+  type: ClusterIP
+  selector:
+    app: cart
+  ports:
+  - port: 3002
+    targetPort: 3002

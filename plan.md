@@ -172,3 +172,134 @@ To deploy this to AWS ECS, we will need to create:
 3. **An Application Load Balancer (ALB):** The AWS version of our "NodePort" Service to route web traffic to your frontend.
 
 Are you ready to start writing the infrastructure files for AWS ECS, or would you like to poke around the ArgoCD UI and test the Minikube deployment a bit more first?
+############################# REDIS SETUP#########################
+
+
+That screenshot is the holy grail of modern DevOps! Seeing your UI update automatically because a robot detected a hash change in a GitHub repository is exactly what companies pay top dollar for. You have fully mastered GitOps synchronization.
+
+Now, it is time to introduce the most notoriously tricky part of Kubernetes: **State**.
+
+### Why is State so tricky?
+
+Until now, our Frontend and Catalog services have been **Stateless**. If a pod crashes, Kubernetes just spins up a new one, and nothing is lost.
+A Shopping Cart, however, needs to remember things. If a user puts a mug in their cart and the pod crashes, they shouldn't lose their items. We need a **Stateful** database to hold that memory. We will use **Redis** (an incredibly fast, in-memory database) to store our cart data.
+
+Let's build the Cart API that will talk to this database.
+
+---
+
+### 1. Scaffold the Cart Service
+
+Open your terminal on your local machine, ensure you are in the root of `ecommerce-devops-project`, and run these commands to create the new backend service:
+
+```bash
+# Move into the apps folder
+cd apps
+
+# Create the folder and initialize it
+mkdir cart-service
+cd cart-service
+npm init -y
+
+# Install our dependencies (Express for the web server, Redis for the database)
+npm install express cors redis
+
+```
+
+### 2. Add the Cart API Code
+
+Open your VS Code explorer, go to `apps/cart-service`, and create a file named `server.js`. Paste this code inside.
+
+*Notice the 12-Factor App rule in action: We do not hardcode the Redis connection. We tell the app to look for an Environment Variable named `REDIS_URL`, which we will inject later via Kubernetes.*
+
+```javascript
+const express = require('express');
+const cors = require('cors');
+const { createClient } = require('redis');
+
+const app = express();
+const PORT = process.env.PORT || 3002;
+
+// 12-Factor App: Read Redis URL from environment variables
+const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+
+app.use(cors());
+app.use(express.json());
+
+// Initialize Redis Client
+const redisClient = createClient({ url: REDIS_URL });
+redisClient.on('error', (err) => console.error('Redis Client Error', err));
+
+// Connect to Redis before starting the API
+redisClient.connect().then(() => {
+    console.log(`Connected to Redis at ${REDIS_URL}`);
+}).catch(console.error);
+
+// Mandatory Health Check Endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'UP', service: 'cart-service', redis: redisClient.isOpen ? 'CONNECTED' : 'DISCONNECTED' });
+});
+
+// Add item to cart
+app.post('/cart/:userId', async (req, res) => {
+    const { userId } = req.params;
+    const { product } = req.body;
+    
+    // Fetch current cart or create empty array
+    const currentCartData = await redisClient.get(`cart:${userId}`);
+    const cart = currentCartData ? JSON.parse(currentCartData) : [];
+    
+    cart.push(product);
+    
+    // Save back to Redis
+    await redisClient.set(`cart:${userId}`, JSON.stringify(cart));
+    res.json({ message: 'Item added', cart });
+});
+
+// Get user cart
+app.get('/cart/:userId', async (req, res) => {
+    const { userId } = req.params;
+    const cartData = await redisClient.get(`cart:${userId}`);
+    res.json(cartData ? JSON.parse(cartData) : []);
+});
+
+app.listen(PORT, () => {
+    console.log(`Cart service running on port ${PORT}`);
+});
+
+```
+
+### 3. Dockerize the Cart Service
+
+Just like our Catalog service, we need to tell Docker how to package this up.
+
+Inside the `apps/cart-service` folder, create a `.dockerignore` file:
+
+```text
+node_modules
+npm-debug.log
+.git
+.gitignore
+Dockerfile
+.dockerignore
+
+```
+
+Next, create a `Dockerfile` inside the `apps/cart-service` folder:
+
+```dockerfile
+FROM node:22-alpine
+WORKDIR /usr/src/app
+COPY package*.json ./
+RUN npm install --omit=dev
+COPY . .
+EXPOSE 3002
+USER node
+CMD ["node", "server.js"]
+
+```
+
+---
+
+We now have the application code and the Dockerfile ready. However, before we write the Kubernetes YAML files, we need to teach our GitHub Actions CI pipeline that this new third service exists so it can build it and push it to Docker Hub alongside the others.
+

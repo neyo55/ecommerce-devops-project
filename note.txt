@@ -65,7 +65,11 @@ view on the browser https://localhost:8080
 
 To view the frontend page http://127.0.0.1:58861
 
-
+############## GitHub Commands #############
+git add apps/frontend-ui/src/App.jsx
+git commit -m "feat: upgrade ui to enterprise storefront"
+git pull origin main --rebase
+git push origin main
 
 
 
