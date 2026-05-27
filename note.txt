@@ -23,6 +23,9 @@ minikube image load catalog-service:1.0
 # 3. Load the React frontend image into Minikube
 minikube image load frontend-ui:1.0
 
+# Command to enable ingress service 
+minikube addons enable ingress
+
 # Apply both YAML files
 kubectl apply -f catalog-api.yaml
 kubectl apply -f frontend-ui.yaml
