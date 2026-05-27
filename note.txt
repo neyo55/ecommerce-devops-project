@@ -26,6 +26,15 @@ minikube image load frontend-ui:1.0
 # Command to enable ingress service 
 minikube addons enable ingress
 
+# Command to see IP address of cluster
+minikube ip
+
+# Command to build bridge between local host and internal K8s ingress controller 
+minikube tunnel
+
+
+
+
 # Apply both YAML files
 kubectl apply -f catalog-api.yaml
 kubectl apply -f frontend-ui.yaml

@@ -26,7 +26,7 @@ app.get('/health', (req, res) => {
 });
 
 // Add item to cart
-app.post('/cart/:userId', async (req, res) => {
+app.post('/api/cart/:userId', async (req, res) => {
     const { userId } = req.params;
     const { product } = req.body;
     
@@ -42,7 +42,7 @@ app.post('/cart/:userId', async (req, res) => {
 });
 
 // Get user cart
-app.get('/cart/:userId', async (req, res) => {
+app.get('/api/cart/:userId', async (req, res) => {
     const { userId } = req.params;
     const cartData = await redisClient.get(`cart:${userId}`);
     res.json(cartData ? JSON.parse(cartData) : []);
