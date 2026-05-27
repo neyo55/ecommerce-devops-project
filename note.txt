@@ -41,7 +41,15 @@ kubectl apply -f infrastructure/argocd/application.yaml
 
 
 
-# commands to run to start the project (Powershell)
+# command to manually tell kubernetes to restart the frontend pods
+kubectl rollout restart deployment frontend-deployment
+
+
+
+
+
+
+######### commands to run to start the project (Powershell) ########
 minikube start
 
 # Run this in powershell after the below commands has been run 
@@ -54,6 +62,10 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 
 view on the browser https://localhost:8080
+
+To view the frontend page http://127.0.0.1:58861
+
+
 
 
 
