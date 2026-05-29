@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-deployment
+  labels:
+    app: auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth
+  template:
+    metadata:
+      labels:
+        app: auth
+    spec:
+      containers:
+      - name: auth
+        # Replace neyo55 with your actual Docker Hub username!
+        image: neyo55/auth-service:latest 
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3002
+        env:
+        - name: DB_HOST
+          value: "auth-db-service"
+        - name: DB_USER
+          value: "postgres_user"
+        - name: DB_DATABASE
+          value: "auth_db"
+        - name: JWT_SECRET
+          value: "super_secret_jwt_key_123" # In production, this would also be a K8s Secret
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: postgres-password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+spec:
+  type: ClusterIP
+  selector:
+    app: auth
+  ports:
+  - port: 3002
+    targetPort: 3002
