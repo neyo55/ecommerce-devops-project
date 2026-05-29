@@ -17,7 +17,7 @@ spec:
       containers:
       - name: auth
         # Replace neyo55 with your actual Docker Hub username!
-        image: neyo55/auth-service:06383c8
+        image: neyo55/auth-service:d25a974
         imagePullPolicy: Always
         ports:
         - containerPort: 3002
