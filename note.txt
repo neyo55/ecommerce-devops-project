@@ -26,6 +26,9 @@ minikube image load frontend-ui:1.0
 # Command to enable ingress service 
 minikube addons enable ingress
 
+# Command to enable metrics-server
+minikube addons enable metrics-server
+
 # Command to see IP address of cluster
 minikube ip
 
@@ -57,8 +60,10 @@ kubectl apply -f infrastructure/argocd/application.yaml
 kubectl rollout restart deployment frontend-deployment
 
 
-
-
+######### Command to install Argocd ##################
+kubectl create namespace argocd
+kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl wait --for=condition=Ready pods --all -n argocd --timeout=300s
 
 
 ######### commands to run to start the project (Powershell) ########
@@ -67,9 +72,9 @@ minikube start
 # Run this in powershell after the below commands has been run 
 minikube service frontend-service
 
-
+######## Command to access Argocd login page ###################
 # run this in VSCode terminal
-kubectl port-forward svc/argocd-server -n argocd 8080:443
+kubectl port-forward svc/argocd-server -n argocd 8080:443    or 8081:443
 
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 
@@ -81,6 +86,9 @@ To view the frontend page http://127.0.0.1:58861
 kubectl port-forward svc/catalog-service 3001:3001
 
 http://localhost:3001/health
+
+
+
 
 ############## GitHub Commands #############
 git add apps/frontend-ui/src/App.jsx
