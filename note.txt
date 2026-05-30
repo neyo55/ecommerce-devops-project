@@ -66,6 +66,15 @@ kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubuse
 kubectl wait --for=condition=Ready pods --all -n argocd --timeout=300s
 
 
+######### RabbitMQ Service #############
+# Port forward the rabbitmq service using the below command
+kubectl port-forward svc/rabbitmq-service 15672:15672
+
+# the web address to view rabbitmq dashboard
+http://localhost:15672
+
+
+
 ######### commands to run to start the project (Powershell) ########
 minikube start
 
@@ -113,5 +122,13 @@ git commit -m "chore: sync local files with remote"
 git push origin main
 
 
+######### commands to run to start the project (Powershell) ########
+minikube start
+minikube tunnel
 
+# run this in vscode 
+kubectl port-forward svc/argocd-server -n argocd 8080:443
 
+kubectl create secret generic postgres-secret --from-literal=postgres-password=SuperSecurePassword123
+kubectl rollout restart deployment auth-deployment auth-db-deployment
+kubectl get pods

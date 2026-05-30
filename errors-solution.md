@@ -146,3 +146,8 @@ Bash
 kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 Once that runs, everything should successfully apply or configure without errors.
 
+### Error: Node.js API Database Connection Refused on Startup
+* **Error Message:** `Database initialization failed: connect ECONNREFUSED <IP>:5432` in pod logs, resulting in a `500 Internal Server Error` on HTTP requests.
+* **Cause:** A microservices race condition. The lightweight Node.js API pod booted up instantly and attempted to execute its database initialization scripts (creating tables) before the heavier PostgreSQL pod had fully completed its internal startup sequence.
+* **Solution:** Allow the database pod 15-30 seconds to fully initialize, then force the API pod to restart and rerun its scripts by executing: `kubectl rollout restart deployment <api-deployment-name>`.
+

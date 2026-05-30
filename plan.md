@@ -389,3 +389,87 @@ Currently, our app assumes a hardcoded user (`user123`). We need real logins.
 
 Which of these two enterprise challenges would you like to build into your cluster next?
 
+You are making a very wise choice. In the DevOps and backend engineering world, we have a saying: *"Make it work, make it secure, make it scale, and then make it pretty."* Deferring the CSS and UI polish to focus on core cloud-native architecture is exactly the right prioritization.
+
+Let's dive into **Option A: Event-Driven Architecture (EDA) with RabbitMQ**.
+
+### The Asynchronous Masterplan
+
+Right now, your microservices communicate **synchronously** via HTTP. If Service A calls Service B, Service A has to wait for Service B to reply. If Service B is down, Service A crashes.
+
+In an **asynchronous** Event-Driven Architecture, we introduce a "Message Broker" (RabbitMQ) in the middle.
+
+1. A user clicks "Checkout".
+2. The **Cart API** packages the cart data, drops a message into a RabbitMQ queue saying *"New Order Pending,"* and immediately responds to the user: *"Checkout successful!"* (No waiting!).
+3. A brand new **Order Service** (which doesn't even have an HTTP server or web routes) sits in the background quietly listening to RabbitMQ. When it sees the message, it picks it up and processes the payment/order.
+
+If the Order Service crashes, the messages just wait safely in the RabbitMQ queue until the service reboots. This is the secret to zero-downtime microservices!
+
+---
+
+### Step 1: Deploy RabbitMQ to Kubernetes
+
+Before we write the Order Service code, we need to spin up the RabbitMQ message broker in your cluster. We will use the `management` image tag, which actually comes with a beautiful built-in web UI so we can physically see the messages moving through the queues!
+
+Create a new file in your `infrastructure/k8s-manifests/` folder named `rabbitmq.yaml` and paste this configuration:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq-deployment
+  labels:
+    app: rabbitmq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+      - name: rabbitmq
+        image: rabbitmq:3-management-alpine
+        ports:
+        - name: amqp
+          containerPort: 5672  # The port microservices use to send messages
+        - name: management
+          containerPort: 15672 # The port for the human-readable Web UI
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-service
+spec:
+  type: ClusterIP
+  selector:
+    app: rabbitmq
+  ports:
+  - name: amqp
+    port: 5672
+    targetPort: 5672
+  - name: management
+    port: 15672
+    targetPort: 15672
+
+```
+
+### Step 2: Push the Infrastructure
+
+Let's get this message broker deployed via ArgoCD so it's ready and waiting for our applications.
+
+Run these commands in your terminal:
+
+```bash
+git add infrastructure/k8s-manifests/rabbitmq.yaml
+git commit -m "feat: deploy rabbitmq message broker for event-driven architecture"
+git push origin main
+
+```
+
+Once ArgoCD syncs this and the `rabbitmq-deployment` pod turns green, we have a choice on how to proceed.
+
+Should we do a quick port-forward to explore the RabbitMQ Management Web Dashboard so you can see how queues work visually, or do you want to jump straight into writing the Node.js **Order Service** code that will consume these messages?
