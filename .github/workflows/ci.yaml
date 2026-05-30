@@ -58,6 +58,14 @@ jobs:
           
           sed -i "s|image: ${{ secrets.DOCKER_USERNAME }}/auth-service:.*|image: ${{ secrets.DOCKER_USERNAME }}/auth-service:$IMAGE_TAG|g" infrastructure/k8s-manifests/auth-api.yaml
 
+      - name: Build and Push Order Service
+        run: |
+          IMAGE_TAG=${GITHUB_SHA::7}
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/order-service:$IMAGE_TAG ./apps/order-service
+          docker push ${{ secrets.DOCKER_USERNAME }}/order-service:$IMAGE_TAG
+          
+          sed -i "s|image: ${{ secrets.DOCKER_USERNAME }}/order-service:.*|image: ${{ secrets.DOCKER_USERNAME }}/order-service:$IMAGE_TAG|g" infrastructure/k8s-manifests/order-api.yaml
+      
       - name: Commit and Push GitOps Manifests
         run: |
           git config --global user.name "github-actions[bot]"
