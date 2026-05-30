@@ -1,53 +1,95 @@
 const express = require('express');
-const cors = require('cors');
 const { createClient } = require('redis');
+const amqp = require('amqplib');
 
 const app = express();
-const PORT = process.env.PORT || 3002;
-
-// 12-Factor App: Read Redis URL from environment variables
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
-
-app.use(cors());
 app.use(express.json());
 
-// Initialize Redis Client
+const PORT = process.env.PORT || 3002;
+const REDIS_URL = process.env.REDIS_URL || 'redis://redis-service:6379';
+const RABBITMQ_URL = process.env.RABBITMQ_URL || 'amqp://rabbitmq-service:5672';
+
+// --- Redis Setup ---
 const redisClient = createClient({ url: REDIS_URL });
-redisClient.on('error', (err) => console.error('Redis Client Error', err));
+redisClient.on('error', (err) => console.log('Redis Client Error', err));
+redisClient.connect().then(() => console.log('Connected to Redis'));
 
-// Connect to Redis before starting the API
-redisClient.connect().then(() => {
-    console.log(`Connected to Redis at ${REDIS_URL}`);
-}).catch(console.error);
+// --- RabbitMQ Setup ---
+let rabbitChannel;
+async function connectToRabbitMQ() {
+  try {
+    const connection = await amqp.connect(RABBITMQ_URL);
+    rabbitChannel = await connection.createChannel();
+    await rabbitChannel.assertQueue('order_queue', { durable: true });
+    console.log('Connected to RabbitMQ');
+  } catch (error) {
+    console.error('RabbitMQ connection failed, retrying...', error.message);
+    setTimeout(connectToRabbitMQ, 5000);
+  }
+}
+connectToRabbitMQ();
 
-// Mandatory Health Check Endpoint
+// Health Check
 app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'UP', service: 'cart-service', redis: redisClient.isOpen ? 'CONNECTED' : 'DISCONNECTED' });
+  res.json({ status: 'UP', service: 'cart-service' });
 });
 
-// Add item to cart
-app.post('/api/cart/:userId', async (req, res) => {
-    const { userId } = req.params;
-    const { product } = req.body;
-    
-    // Fetch current cart or create empty array
-    const currentCartData = await redisClient.get(`cart:${userId}`);
-    const cart = currentCartData ? JSON.parse(currentCartData) : [];
-    
-    cart.push(product);
-    
-    // Save back to Redis
-    await redisClient.set(`cart:${userId}`, JSON.stringify(cart));
-    res.json({ message: 'Item added', cart });
+// Get Cart
+app.get('/api/cart/:username', async (req, res) => {
+  const { username } = req.params;
+  const cartData = await redisClient.get(username);
+  res.json(cartData ? JSON.parse(cartData) : []);
 });
 
-// Get user cart
-app.get('/api/cart/:userId', async (req, res) => {
-    const { userId } = req.params;
-    const cartData = await redisClient.get(`cart:${userId}`);
-    res.json(cartData ? JSON.parse(cartData) : []);
+// Add to Cart
+app.post('/api/cart/:username', async (req, res) => {
+  const { username } = req.params;
+  const { product } = req.body;
+  
+  const cartData = await redisClient.get(username);
+  const cart = cartData ? JSON.parse(cartData) : [];
+  
+  cart.push(product);
+  await redisClient.set(username, JSON.stringify(cart));
+  
+  res.json({ message: 'Item added', cart });
+});
+
+// Checkout Endpoint (The Event Producer)
+app.post('/api/cart/:username/checkout', async (req, res) => {
+  const { username } = req.params;
+  
+  try {
+    const cartData = await redisClient.get(username);
+    const cart = cartData ? JSON.parse(cartData) : [];
+    
+    if (cart.length === 0) {
+      return res.status(400).json({ error: 'Cart is empty' });
+    }
+
+    // Create the order payload
+    const orderPayload = {
+      username: username,
+      items: cart,
+      timestamp: new Date().toISOString()
+    };
+
+    // Send the payload to RabbitMQ
+    rabbitChannel.sendToQueue(
+      'order_queue', 
+      Buffer.from(JSON.stringify(orderPayload)), 
+      { persistent: true }
+    );
+    
+    // Clear the user's cart in Redis
+    await redisClient.del(username);
+    
+    res.json({ message: 'Checkout successful! Order is processing.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Checkout failed' });
+  }
 });
 
 app.listen(PORT, () => {
-    console.log(`Cart service running on port ${PORT}`);
+  console.log(`Cart Service running on port ${PORT}`);
 });
