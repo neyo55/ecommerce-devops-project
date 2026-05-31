@@ -10,7 +10,34 @@ function App() {
   const [password, setPassword] = useState('');
   const [authMessage, setAuthMessage] = useState('');
   const [authSuccess, setAuthSuccess] = useState(false);
+  
+  // New States for UI Polish
+  const [timeLeft, setTimeLeft] = useState({ hours: 16, minutes: 58, seconds: 16 });
+  const [addedItem, setAddedItem] = useState(null); // Tracks which item was just added
 
+  // --- TIMER LOGIC ---
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        let { hours, minutes, seconds } = prev;
+        if (seconds > 0) {
+          seconds--;
+        } else {
+          seconds = 59;
+          if (minutes > 0) {
+            minutes--;
+          } else {
+            minutes = 59;
+            if (hours > 0) hours--;
+          }
+        }
+        return { hours, minutes, seconds };
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // --- INITIAL DATA FETCH ---
   useEffect(() => {
     fetch('/api/catalog')
       .then(res => res.json())
@@ -73,6 +100,11 @@ function App() {
 
   const addToCart = (product) => {
     const payload = JSON.parse(atob(token.split('.')[1]));
+    
+    // UI Feedback: Show "Added!" briefly
+    setAddedItem(product.id);
+    setTimeout(() => setAddedItem(null), 1500);
+
     fetch(`/api/cart/${payload.username}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -93,18 +125,21 @@ function App() {
     })
     .then(res => res.json())
     .then(data => {
-      alert("✅ Order Placed Successfully!");
+      alert("✅ Order Placed Successfully! Your items are on the way.");
       setCartCount(0);
     })
     .catch(err => console.error("Error during checkout:", err));
   };
+
+  // Format time with leading zeros
+  const formatTime = (val) => val.toString().padStart(2, '0');
 
   // --- AUTHENTICATION SCREEN ---
   if (!token) {
     return (
       <div style={{ fontFamily: 'system-ui, sans-serif', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f5f5f5' }}>
         <div style={{ backgroundColor: 'white', padding: '3rem', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', width: '100%', maxWidth: '400px' }}>
-          <h2 style={{ textAlign: 'center', color: '#2563eb', margin: '0 0 1.5rem 0', fontSize: '2.5rem', fontWeight: '900' }}>NEYO55 STORE</h2>
+          <h2 style={{ textAlign: 'center', color: '#2563eb', margin: '0 0 1.5rem 0', fontSize: '2.5rem', fontWeight: '900', letterSpacing: '-1px' }}>NEYO55 STORE</h2>
           
           <div style={{ display: 'flex', marginBottom: '1.5rem', borderBottom: '2px solid #eee' }}>
             <button onClick={() => {setIsLoginView(true); setAuthMessage('');}} style={{ flex: 1, padding: '1rem', backgroundColor: 'transparent', border: 'none', borderBottom: isLoginView ? '3px solid #2563eb' : 'none', fontWeight: isLoginView ? 'bold' : 'normal', color: isLoginView ? '#2563eb' : '#777', cursor: 'pointer', fontSize: '1.1rem' }}>Log In</button>
@@ -117,7 +152,7 @@ function App() {
             <button type="submit" style={{ padding: '1rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer', boxShadow: '0 4px 6px rgba(37, 99, 235, 0.3)' }}>
               {isLoginView ? 'LOGIN' : 'CREATE ACCOUNT'}
             </button>
-            {authMessage && <p style={{ color: authSuccess ? '#2e7d32' : '#d32f2f', textAlign: 'center', margin: 0, fontWeight: 'bold' }}>{authMessage}</p>}
+            {authMessage && <p style={{ color: authSuccess ? '#10b981' : '#ef4444', textAlign: 'center', margin: 0, fontWeight: 'bold' }}>{authMessage}</p>}
           </form>
         </div>
       </div>
@@ -128,20 +163,15 @@ function App() {
 
   // --- MAIN STOREFRONT ---
   return (
-    <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: '#f5f5f5', minHeight: '100vh', paddingBottom: '4rem' }}>
+    <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: '#f5f5f5', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       
       <style>
         {`
-          @keyframes marquee {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
-          }
-          .marquee-container {
-            overflow: hidden; white-space: nowrap; background: #111827; color: white; padding: 10px 0; font-weight: bold; font-size: 0.9rem; letter-spacing: 1px;
-          }
-          .marquee-text {
-            display: inline-block; animation: marquee 15s linear infinite;
-          }
+          @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+          .marquee-container { overflow: hidden; white-space: nowrap; background: #111827; color: white; padding: 10px 0; font-weight: bold; font-size: 0.9rem; letter-spacing: 1px; }
+          .marquee-text { display: inline-block; animation: marquee 20s linear infinite; }
+          .nav-btn { transition: all 0.2s; }
+          .nav-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         `}
       </style>
 
@@ -153,68 +183,105 @@ function App() {
       </div>
 
       {/* Main Navbar */}
-      <nav style={{ backgroundColor: '#fff', padding: '1.5rem 2rem', position: 'sticky', top: 0, zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-        <h1 style={{ color: '#2563eb', margin: 0, fontSize: '2rem', fontWeight: '900' }}>NEYO55 STORE</h1>
+      <nav style={{ backgroundColor: '#fff', padding: '1.2rem 2rem', position: 'sticky', top: 0, zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+        <h1 style={{ color: '#2563eb', margin: 0, fontSize: '2.2rem', fontWeight: '900', letterSpacing: '-1px' }}>NEYO55<br/><span style={{fontSize: '1.2rem', color: '#111827'}}>STORE</span></h1>
         
         {/* Search Bar */}
-        <div style={{ flex: '0 1 500px', display: 'flex' }}>
+        <div style={{ flex: '0 1 450px', display: 'flex' }}>
           <input type="text" placeholder="Search products, brands and categories" style={{ width: '100%', padding: '0.8rem 1rem', border: '1px solid #ccc', borderRadius: '4px 0 0 4px', outline: 'none' }} />
           <button style={{ padding: '0.8rem 1.5rem', backgroundColor: '#2563eb', border: 'none', borderRadius: '0 4px 4px 0', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>SEARCH</button>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          <div style={{ fontWeight: '600', color: '#4b5563', fontSize: '1.1rem' }}>
-            Hi, {currentUser} 👋
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>Hello,</span>
+            <span style={{ fontWeight: 'bold', color: '#111827' }}>{currentUser}</span>
           </div>
-          <div style={{ fontWeight: 'bold', color: '#333', fontSize: '1.1rem', backgroundColor: '#f3f4f6', padding: '0.5rem 1rem', borderRadius: '20px' }}>
-            🛒 Cart: {cartCount}
+          <div style={{ fontWeight: 'bold', color: '#111827', fontSize: '1.1rem', backgroundColor: '#f3f4f6', padding: '0.5rem 1rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            🛒 Cart: <span style={{ color: '#2563eb' }}>{cartCount}</span>
           </div>
-          <button onClick={handleCheckout} style={{ padding: '0.8rem 1.5rem', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(16, 185, 129, 0.3)' }}>CHECKOUT</button>
-          <button onClick={handleLogout} style={{ padding: '0.8rem 1.5rem', backgroundColor: '#fff', color: '#333', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>LOGOUT</button>
+          <button onClick={handleCheckout} className="nav-btn" style={{ padding: '0.8rem 1.5rem', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>CHECKOUT</button>
+          <button onClick={handleLogout} className="nav-btn" style={{ padding: '0.8rem 1.5rem', backgroundColor: '#fff', color: '#ef4444', border: '1px solid #ef4444', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>LOGOUT</button>
         </div>
       </nav>
 
-      {/* Flash Sales Banner */}
-      <div style={{ maxWidth: '1200px', margin: '2rem auto', backgroundColor: '#ef4444', borderRadius: '8px 8px 0 0', padding: '1rem 2rem', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>⚡ Flash Sales</h2>
-        <div style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>Time Left: 16h : 58m : 16s</div>
-      </div>
-      
-      {/* Product Grid */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem', backgroundColor: '#fff', borderRadius: '0 0 8px 8px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
-          {products.length === 0 ? <p style={{ textAlign: 'center', gridColumn: '1/-1' }}>Loading products...</p> : 
-            products.map(product => (
-              <div key={product.id} style={{ border: '1px solid #eee', borderRadius: '4px', overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column', transition: 'box-shadow 0.2s', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'} onMouseOut={e => e.currentTarget.style.boxShadow = 'none'}>
-                
-                {/* Discount Tag */}
-                <div style={{ position: 'absolute', top: '10px', right: '10px', backgroundColor: '#fee2e2', color: '#ef4444', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.9rem' }}>
-                  {product.discount}
-                </div>
-
-                <div style={{ height: '200px', padding: '1rem' }}>
-                  <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                </div>
-                
-                <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-                  <h3 style={{ margin: '0 0 0.5rem 0', color: '#333', fontSize: '1rem', fontWeight: 'normal', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{product.name}</h3>
-                  <p style={{ margin: '0', fontWeight: 'bold', color: '#333', fontSize: '1.2rem' }}>${product.price.toFixed(2)}</p>
-                  <p style={{ margin: '0 0 1rem 0', color: '#777', textDecoration: 'line-through', fontSize: '0.9rem' }}>${product.originalPrice.toFixed(2)}</p>
+      {/* Main Content Area (pushes footer down) */}
+      <div style={{ flex: 1 }}>
+        {/* Flash Sales Banner */}
+        <div style={{ maxWidth: '1200px', margin: '2rem auto 0 auto', backgroundColor: '#ef4444', borderRadius: '8px 8px 0 0', padding: '1.2rem 2rem', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.5rem' }}>⚡ Flash Sales</h2>
+          <div style={{ fontWeight: 'bold', fontSize: '1.2rem', backgroundColor: 'rgba(255,255,255,0.2)', padding: '5px 15px', borderRadius: '20px' }}>
+            Time Left: {formatTime(timeLeft.hours)}h : {formatTime(timeLeft.minutes)}m : {formatTime(timeLeft.seconds)}s
+          </div>
+        </div>
+        
+        {/* Product Grid */}
+        <div style={{ maxWidth: '1200px', margin: '0 auto 3rem auto', padding: '2rem', backgroundColor: '#fff', borderRadius: '0 0 8px 8px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '2rem' }}>
+            {products.length === 0 ? <p style={{ textAlign: 'center', gridColumn: '1/-1', color: '#6b7280' }}>Loading products from the cluster...</p> : 
+              products.map(product => (
+                <div key={product.id} style={{ border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column', transition: 'all 0.2s', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1)'} onMouseOut={e => e.currentTarget.style.boxShadow = 'none'}>
                   
-                  {/* Progress Bar Fake */}
-                  <div style={{ width: '100%', backgroundColor: '#eee', height: '6px', borderRadius: '3px', marginBottom: '1rem' }}>
-                    <div style={{ width: '60%', backgroundColor: '#2563eb', height: '100%', borderRadius: '3px' }}></div>
+                  {/* Discount Tag */}
+                  <div style={{ position: 'absolute', top: '10px', right: '10px', backgroundColor: '#fee2e2', color: '#ef4444', padding: '4px 10px', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.9rem', zIndex: 2 }}>
+                    {product.discount}
                   </div>
 
-                  <button onClick={() => addToCart(product)} style={{ marginTop: 'auto', padding: '0.8rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', width: '100%', transition: 'background-color 0.2s' }}>
-                    ADD TO CART
-                  </button>
+                  <div style={{ height: '220px', padding: '1rem', backgroundColor: '#fff' }}>
+                    <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'contain', transition: 'transform 0.3s' }} onMouseOver={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'} />
+                  </div>
+                  
+                  <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flexGrow: 1, backgroundColor: '#f9fafb', borderTop: '1px solid #e5e7eb' }}>
+                    <h3 style={{ margin: '0 0 0.5rem 0', color: '#111827', fontSize: '1.1rem', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{product.name}</h3>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '1rem' }}>
+                      <p style={{ margin: '0', fontWeight: '800', color: '#111827', fontSize: '1.4rem' }}>${product.price.toFixed(2)}</p>
+                      <p style={{ margin: '0', color: '#9ca3af', textDecoration: 'line-through', fontSize: '1rem' }}>${product.originalPrice.toFixed(2)}</p>
+                    </div>
+                    
+                    {/* Stock Progress Bar */}
+                    <div style={{ width: '100%', backgroundColor: '#e5e7eb', height: '6px', borderRadius: '3px', marginBottom: '1.5rem' }}>
+                      <div style={{ width: '60%', backgroundColor: '#2563eb', height: '100%', borderRadius: '3px' }}></div>
+                    </div>
+
+                    <button 
+                      onClick={() => addToCart(product)} 
+                      style={{ 
+                        marginTop: 'auto', 
+                        padding: '0.8rem', 
+                        backgroundColor: addedItem === product.id ? '#10b981' : '#2563eb', 
+                        color: 'white', 
+                        border: 'none', 
+                        borderRadius: '6px', 
+                        cursor: 'pointer', 
+                        fontWeight: 'bold', 
+                        width: '100%', 
+                        transition: 'background-color 0.2s',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}
+                    >
+                      {addedItem === product.id ? 'ADDED! ✅' : 'ADD TO CART 🛒'}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))
-          }
+              ))
+            }
+          </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer style={{ backgroundColor: '#111827', color: '#9ca3af', padding: '2rem', textAlign: 'center', marginTop: 'auto' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <h2 style={{ color: 'white', margin: 0, letterSpacing: '2px' }}>NEYO55 STORE</h2>
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>Fully powered by Kubernetes, GitOps, and Microservices.</p>
+          <div style={{ borderTop: '1px solid #374151', margin: '1rem 0', paddingTop: '1rem', fontSize: '0.85rem' }}>
+            &copy; {new Date().getFullYear()} Neyo55 Store. All rights reserved.
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
