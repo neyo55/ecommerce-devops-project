@@ -127,8 +127,35 @@ minikube start
 minikube tunnel
 
 # run this in vscode 
-kubectl port-forward svc/argocd-server -n argocd 8080:443
+kubectl port-forward svc/argocd-server -n argocd 8081:443    or   8080:443
+
+# Command for RabbitMQ port forwarding to see it on the browser 
+kubectl port-forward svc/rabbitmq-service 15672:15672
 
 kubectl create secret generic postgres-secret --from-literal=postgres-password=SuperSecurePassword123
 kubectl rollout restart deployment auth-deployment auth-db-deployment
 kubectl get pods
+
+
+#####
+I want to implement 
+Roll Backt to the pipeline
+I want to include monitoring (prometheus, Grafana, log stack)
+I want to inlcude security to the pipeline 
+
+I also want to ask the total microservice apps we have Running
+total pods Running
+
+###### i have prompted this but just to store it here if AI did not remember ####################
+I prefer to update the readme first to fully document the PostgreSQL, Secrets, and RabbitMQ architecture and adding the RabbitMQ stress test to the readme as well
+
+Next I want to implement 
+Roll Back to the pipeline incase there is a problem
+I want to include monitoring (prometheus, Grafana)
+I want to inlcude security to the pipeline 
+
+then we can now dive into polishing up the React frontend UI to make it look incredible or a real ecomerce website.
+
+
+
+<h1 style={{ color: '#2563eb', margin: 0, fontSize: '2.5rem' }}>🛒 DevOps Swag Store</h1>
