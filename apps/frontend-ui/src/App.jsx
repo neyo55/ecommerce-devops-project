@@ -4,9 +4,13 @@ function App() {
   const [products, setProducts] = useState([]);
   const [cartCount, setCartCount] = useState(0);
   const [token, setToken] = useState(localStorage.getItem('token') || null);
+  
+  // Auth State
+  const [isLoginView, setIsLoginView] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [authMessage, setAuthMessage] = useState('');
+  const [authSuccess, setAuthSuccess] = useState(false);
 
   useEffect(() => {
     fetch('/api/catalog')
@@ -27,10 +31,12 @@ function App() {
     }
   }, [token]);
 
-  const handleLogin = async (e) => {
+  const handleAuth = async (e) => {
     e.preventDefault();
+    const endpoint = isLoginView ? '/api/auth/login' : '/api/auth/register';
+    
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
@@ -38,14 +44,23 @@ function App() {
       const data = await res.json();
       
       if (res.ok) {
-        setToken(data.token);
-        localStorage.setItem('token', data.token);
-        setAuthMessage('');
+        if (isLoginView) {
+          setToken(data.token);
+          localStorage.setItem('token', data.token);
+          setAuthMessage('');
+        } else {
+          setAuthSuccess(true);
+          setAuthMessage('Account created! Please log in.');
+          setIsLoginView(true);
+          setPassword('');
+        }
       } else {
-        setAuthMessage(data.error || 'Login failed');
+        setAuthMessage(data.error || 'Authentication failed');
+        setAuthSuccess(false);
       }
     } catch (err) {
       setAuthMessage('Server error. Please try again.');
+      setAuthSuccess(false);
     }
   };
 
@@ -59,25 +74,18 @@ function App() {
 
   const addToCart = (product) => {
     const payload = JSON.parse(atob(token.split('.')[1]));
-    
     fetch(`/api/cart/${payload.username}`, {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` 
-      },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ product })
     })
     .then(res => res.json())
-    .then(data => {
-      setCartCount(data.cart.length);
-    })
+    .then(data => setCartCount(data.cart.length))
     .catch(err => console.error("Error adding to cart:", err));
   };
 
   const handleCheckout = () => {
     if (cartCount === 0) return alert("Your cart is empty!");
-    
     const payload = JSON.parse(atob(token.split('.')[1]));
     
     fetch(`/api/cart/${payload.username}/checkout`, {
@@ -86,71 +94,117 @@ function App() {
     })
     .then(res => res.json())
     .then(data => {
-      alert("🎉 " + data.message);
+      alert("✅ Order Placed Successfully!");
       setCartCount(0);
     })
     .catch(err => console.error("Error during checkout:", err));
   };
 
+  // --- AUTHENTICATION SCREEN ---
   if (!token) {
     return (
-      <div style={{ fontFamily: 'system-ui, sans-serif', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f3f4f6' }}>
-        <div style={{ backgroundColor: 'white', padding: '3rem', borderRadius: '16px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)', width: '100%', maxWidth: '400px' }}>
-          <h2 style={{ textAlign: 'center', color: '#111827', marginBottom: '0.5rem', fontSize: '2rem' }}>DevOps Swag</h2>
-          <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: '2rem' }}>Sign in to gear up</p>
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-            <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} style={{ padding: '0.85rem', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '1rem' }} required />
-            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ padding: '0.85rem', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '1rem' }} required />
-            <button type="submit" style={{ padding: '0.85rem', backgroundColor: '#000', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', marginTop: '0.5rem' }}>Secure Login</button>
-            {authMessage && <p style={{ color: '#ef4444', textAlign: 'center', margin: 0, fontWeight: '500' }}>{authMessage}</p>}
+      <div style={{ fontFamily: 'system-ui, sans-serif', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f5f5f5' }}>
+        <div style={{ backgroundColor: 'white', padding: '3rem', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', width: '100%', maxWidth: '400px' }}>
+          <h2 style={{ textAlign: 'center', color: '#f68b1e', margin: '0 0 1.5rem 0', fontSize: '2.5rem', fontWeight: '900' }}>JUMIA⭐</h2>
+          
+          <div style={{ display: 'flex', marginBottom: '1.5rem', borderBottom: '2px solid #eee' }}>
+            <button onClick={() => {setIsLoginView(true); setAuthMessage('');}} style={{ flex: 1, padding: '1rem', backgroundColor: 'transparent', border: 'none', borderBottom: isLoginView ? '3px solid #f68b1e' : 'none', fontWeight: isLoginView ? 'bold' : 'normal', color: isLoginView ? '#f68b1e' : '#777', cursor: 'pointer', fontSize: '1.1rem' }}>Log In</button>
+            <button onClick={() => {setIsLoginView(false); setAuthMessage('');}} style={{ flex: 1, padding: '1rem', backgroundColor: 'transparent', border: 'none', borderBottom: !isLoginView ? '3px solid #f68b1e' : 'none', fontWeight: !isLoginView ? 'bold' : 'normal', color: !isLoginView ? '#f68b1e' : '#777', cursor: 'pointer', fontSize: '1.1rem' }}>Register</button>
+          </div>
+
+          <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+            <input type="text" placeholder="Email or Username" value={username} onChange={(e) => setUsername(e.target.value)} style={{ padding: '1rem', borderRadius: '4px', border: '1px solid #ccc', fontSize: '1rem' }} required />
+            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ padding: '1rem', borderRadius: '4px', border: '1px solid #ccc', fontSize: '1rem' }} required />
+            <button type="submit" style={{ padding: '1rem', backgroundColor: '#f68b1e', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer', boxShadow: '0 4px 6px rgba(246, 139, 30, 0.3)' }}>
+              {isLoginView ? 'LOGIN' : 'CREATE ACCOUNT'}
+            </button>
+            {authMessage && <p style={{ color: authSuccess ? '#2e7d32' : '#d32f2f', textAlign: 'center', margin: 0, fontWeight: 'bold' }}>{authMessage}</p>}
           </form>
         </div>
       </div>
     );
   }
 
+  // --- MAIN STOREFRONT ---
   return (
-    <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: '#f9fafb', minHeight: '100vh', paddingBottom: '4rem' }}>
-      {/* Navigation */}
-      <nav style={{ backgroundColor: '#fff', borderBottom: '1px solid #e5e7eb', padding: '1rem 2rem', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 style={{ color: '#111827', margin: 0, fontSize: '1.5rem', fontWeight: '800', letterSpacing: '-0.5px' }}>DevOps Swag</h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-            <div style={{ fontSize: '1rem', fontWeight: '600', color: '#374151' }}>
-              🛒 Cart ({cartCount})
-            </div>
-            <button onClick={handleCheckout} style={{ padding: '0.6rem 1.2rem', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', transition: 'background-color 0.2s' }}>
-              Checkout
-            </button>
-            <button onClick={handleLogout} style={{ padding: '0.6rem 1.2rem', backgroundColor: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>
-              Logout
-            </button>
+    <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: '#f5f5f5', minHeight: '100vh', paddingBottom: '4rem' }}>
+      
+      {/* CSS for Marquee */}
+      <style>
+        {`
+          @keyframes marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+          }
+          .marquee-container {
+            overflow: hidden; white-space: nowrap; background: #282828; color: white; padding: 10px 0; font-weight: bold; font-size: 0.9rem; letter-spacing: 1px;
+          }
+          .marquee-text {
+            display: inline-block; animation: marquee 15s linear infinite;
+          }
+        `}
+      </style>
+
+      {/* Marquee Header */}
+      <div className="marquee-container">
+        <div className="marquee-text">
+          🔥 JOLLY AFTER JOLLY DEALS! UP TO 40% OFF ELECTRONICS & APPLIANCES. FREE DELIVERY ON ORDERS OVER $50. SHOP NOW! 🔥
+        </div>
+      </div>
+
+      {/* Main Navbar */}
+      <nav style={{ backgroundColor: '#fff', padding: '1.5rem 2rem', position: 'sticky', top: 0, zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+        <h1 style={{ color: '#f68b1e', margin: 0, fontSize: '2rem', fontWeight: '900' }}>JUMIA⭐</h1>
+        
+        {/* Fake Search Bar */}
+        <div style={{ flex: '0 1 500px', display: 'flex' }}>
+          <input type="text" placeholder="Search products, brands and categories" style={{ width: '100%', padding: '0.8rem 1rem', border: '1px solid #ccc', borderRadius: '4px 0 0 4px', outline: 'none' }} />
+          <button style={{ padding: '0.8rem 1.5rem', backgroundColor: '#f68b1e', border: 'none', borderRadius: '0 4px 4px 0', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>SEARCH</button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          <div style={{ fontWeight: 'bold', color: '#333', fontSize: '1.1rem' }}>
+            🛒 Cart: {cartCount}
           </div>
+          <button onClick={handleCheckout} style={{ padding: '0.8rem 1.5rem', backgroundColor: '#e01a22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(224, 26, 34, 0.3)' }}>CHECKOUT</button>
+          <button onClick={handleLogout} style={{ padding: '0.8rem 1.5rem', backgroundColor: '#fff', color: '#333', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>LOGOUT</button>
         </div>
       </nav>
 
-      {/* Hero Banner */}
-      <div style={{ backgroundColor: '#111827', color: 'white', padding: '4rem 2rem', textAlign: 'center', marginBottom: '3rem' }}>
-        <h2 style={{ fontSize: '3rem', margin: '0 0 1rem 0', fontWeight: '800' }}>Ship Code in Style.</h2>
-        <p style={{ fontSize: '1.25rem', color: '#9ca3af', margin: 0, maxWidth: '600px', marginInline: 'auto' }}>
-          Exclusive gear for platform engineers, SREs, and developers who deploy on Fridays. Fully powered by Kubernetes.
-        </p>
+      {/* Flash Sales Banner */}
+      <div style={{ maxWidth: '1200px', margin: '2rem auto', backgroundColor: '#e01a22', borderRadius: '8px 8px 0 0', padding: '1rem 2rem', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>⚡ Flash Sales</h2>
+        <div style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>Time Left: 16h : 58m : 16s</div>
       </div>
       
       {/* Product Grid */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
-          {products.length === 0 ? <p style={{ textAlign: 'center', gridColumn: '1/-1', color: '#6b7280' }}>Loading gear from the cluster...</p> : 
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem', backgroundColor: '#fff', borderRadius: '0 0 8px 8px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
+          {products.length === 0 ? <p style={{ textAlign: 'center', gridColumn: '1/-1' }}>Loading products...</p> : 
             products.map(product => (
-              <div key={product.id} style={{ backgroundColor: 'white', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ height: '240px', overflow: 'hidden', backgroundColor: '#f3f4f6' }}>
-                  <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div key={product.id} style={{ border: '1px solid #eee', borderRadius: '4px', overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column', transition: 'box-shadow 0.2s', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'} onMouseOut={e => e.currentTarget.style.boxShadow = 'none'}>
+                
+                {/* Discount Tag */}
+                <div style={{ position: 'absolute', top: '10px', right: '10px', backgroundColor: '#feefed', color: '#e01a22', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.9rem' }}>
+                  {product.discount}
                 </div>
-                <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-                  <h3 style={{ margin: '0 0 0.5rem 0', color: '#111827', fontSize: '1.25rem' }}>{product.name}</h3>
-                  <p style={{ margin: '0 0 1.5rem 0', fontWeight: '700', color: '#4b5563', fontSize: '1.1rem' }}>${product.price.toFixed(2)}</p>
-                  <button onClick={() => addToCart(product)} style={{ marginTop: 'auto', padding: '0.8rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem', width: '100%', transition: 'background-color 0.2s' }}>
-                    Add to Cart
+
+                <div style={{ height: '200px', padding: '1rem' }}>
+                  <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                </div>
+                
+                <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                  <h3 style={{ margin: '0 0 0.5rem 0', color: '#333', fontSize: '1rem', fontWeight: 'normal', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{product.name}</h3>
+                  <p style={{ margin: '0', fontWeight: 'bold', color: '#333', fontSize: '1.2rem' }}>${product.price.toFixed(2)}</p>
+                  <p style={{ margin: '0 0 1rem 0', color: '#777', textDecoration: 'line-through', fontSize: '0.9rem' }}>${product.originalPrice.toFixed(2)}</p>
+                  
+                  {/* Progress Bar Fake */}
+                  <div style={{ width: '100%', backgroundColor: '#eee', height: '6px', borderRadius: '3px', marginBottom: '1rem' }}>
+                    <div style={{ width: '60%', backgroundColor: '#f68b1e', height: '100%', borderRadius: '3px' }}></div>
+                  </div>
+
+                  <button onClick={() => addToCart(product)} style={{ marginTop: 'auto', padding: '0.8rem', backgroundColor: '#f68b1e', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', width: '100%', boxShadow: '0 2px 4px rgba(246, 139, 30, 0.3)' }}>
+                    ADD TO CART
                   </button>
                 </div>
               </div>
