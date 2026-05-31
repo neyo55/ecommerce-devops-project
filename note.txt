@@ -162,6 +162,19 @@ kubectl get pods -n monitoring
 kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring    (Keep this running in a terminal)
 kubectl --namespace monitoring get secrets prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 -d
 
+############ Grafana setup using Helm ###########
+# Add the official Grafana Helm repository
+helm repo add grafana https://grafana.github.io/helm-charts
+
+# Update your local repository list
+helm repo update
+
+# Install Loki and Promtail together into your monitoring namespace
+helm install loki grafana/loki-stack --namespace monitoring
+
+kubectl get svc -n monitoring | grep loki
+kubectl get pods -n monitoring | grep loki
+############################################################################
 
 
 # command for the test login each time i run the program newly due to no Persistent volume (PVC)
