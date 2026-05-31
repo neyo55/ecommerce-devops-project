@@ -127,6 +127,7 @@ git push origin main
 ###### To do Roll-Back of the previous commit 
 git revert HEAD --no-edit
 git push origin main
+###############################################################
 
 
 ######### commands to run to start the project (Powershell) ########
@@ -135,6 +136,8 @@ minikube tunnel
 
 # run this in vscode 
 kubectl port-forward svc/argocd-server -n argocd 8080:443
+kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring
+kubectl port-forward svc/rabbitmq-service 15672:15672
 
 kubectl create secret generic postgres-secret --from-literal=postgres-password=SuperSecurePassword123
 kubectl rollout restart deployment auth-deployment auth-db-deployment

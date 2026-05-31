@@ -1,3 +1,10 @@
+const express = require('express');
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+app.use(express.json());
+
+// Neyo55 Store Inventory
 const products = [
   { 
     id: 1, 
@@ -32,3 +39,18 @@ const products = [
     image: 'https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?q=80&w=400&auto=format&fit=crop' 
   }
 ];
+
+// Health Check
+app.get('/health', (req, res) => {
+  res.json({ status: 'UP', service: 'catalog-service' });
+});
+
+// Get all products
+app.get('/api/catalog', (req, res) => {
+  res.json(products);
+});
+
+// THIS KEEPS THE POD ALIVE
+app.listen(PORT, () => {
+  console.log(`Catalog Service running on port ${PORT}`);
+});

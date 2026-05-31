@@ -5,7 +5,6 @@ function App() {
   const [cartCount, setCartCount] = useState(0);
   const [token, setToken] = useState(localStorage.getItem('token') || null);
   
-  // Auth State
   const [isLoginView, setIsLoginView] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -105,17 +104,17 @@ function App() {
     return (
       <div style={{ fontFamily: 'system-ui, sans-serif', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f5f5f5' }}>
         <div style={{ backgroundColor: 'white', padding: '3rem', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', width: '100%', maxWidth: '400px' }}>
-          <h2 style={{ textAlign: 'center', color: '#f68b1e', margin: '0 0 1.5rem 0', fontSize: '2.5rem', fontWeight: '900' }}>JUMIA⭐</h2>
+          <h2 style={{ textAlign: 'center', color: '#2563eb', margin: '0 0 1.5rem 0', fontSize: '2.5rem', fontWeight: '900' }}>NEYO55 STORE</h2>
           
           <div style={{ display: 'flex', marginBottom: '1.5rem', borderBottom: '2px solid #eee' }}>
-            <button onClick={() => {setIsLoginView(true); setAuthMessage('');}} style={{ flex: 1, padding: '1rem', backgroundColor: 'transparent', border: 'none', borderBottom: isLoginView ? '3px solid #f68b1e' : 'none', fontWeight: isLoginView ? 'bold' : 'normal', color: isLoginView ? '#f68b1e' : '#777', cursor: 'pointer', fontSize: '1.1rem' }}>Log In</button>
-            <button onClick={() => {setIsLoginView(false); setAuthMessage('');}} style={{ flex: 1, padding: '1rem', backgroundColor: 'transparent', border: 'none', borderBottom: !isLoginView ? '3px solid #f68b1e' : 'none', fontWeight: !isLoginView ? 'bold' : 'normal', color: !isLoginView ? '#f68b1e' : '#777', cursor: 'pointer', fontSize: '1.1rem' }}>Register</button>
+            <button onClick={() => {setIsLoginView(true); setAuthMessage('');}} style={{ flex: 1, padding: '1rem', backgroundColor: 'transparent', border: 'none', borderBottom: isLoginView ? '3px solid #2563eb' : 'none', fontWeight: isLoginView ? 'bold' : 'normal', color: isLoginView ? '#2563eb' : '#777', cursor: 'pointer', fontSize: '1.1rem' }}>Log In</button>
+            <button onClick={() => {setIsLoginView(false); setAuthMessage('');}} style={{ flex: 1, padding: '1rem', backgroundColor: 'transparent', border: 'none', borderBottom: !isLoginView ? '3px solid #2563eb' : 'none', fontWeight: !isLoginView ? 'bold' : 'normal', color: !isLoginView ? '#2563eb' : '#777', cursor: 'pointer', fontSize: '1.1rem' }}>Register</button>
           </div>
 
           <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-            <input type="text" placeholder="Email or Username" value={username} onChange={(e) => setUsername(e.target.value)} style={{ padding: '1rem', borderRadius: '4px', border: '1px solid #ccc', fontSize: '1rem' }} required />
+            <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} style={{ padding: '1rem', borderRadius: '4px', border: '1px solid #ccc', fontSize: '1rem' }} required />
             <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ padding: '1rem', borderRadius: '4px', border: '1px solid #ccc', fontSize: '1rem' }} required />
-            <button type="submit" style={{ padding: '1rem', backgroundColor: '#f68b1e', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer', boxShadow: '0 4px 6px rgba(246, 139, 30, 0.3)' }}>
+            <button type="submit" style={{ padding: '1rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer', boxShadow: '0 4px 6px rgba(37, 99, 235, 0.3)' }}>
               {isLoginView ? 'LOGIN' : 'CREATE ACCOUNT'}
             </button>
             {authMessage && <p style={{ color: authSuccess ? '#2e7d32' : '#d32f2f', textAlign: 'center', margin: 0, fontWeight: 'bold' }}>{authMessage}</p>}
@@ -125,11 +124,12 @@ function App() {
     );
   }
 
+  const currentUser = token ? JSON.parse(atob(token.split('.')[1])).username : 'Guest';
+
   // --- MAIN STOREFRONT ---
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: '#f5f5f5', minHeight: '100vh', paddingBottom: '4rem' }}>
       
-      {/* CSS for Marquee */}
       <style>
         {`
           @keyframes marquee {
@@ -137,7 +137,7 @@ function App() {
             100% { transform: translateX(-100%); }
           }
           .marquee-container {
-            overflow: hidden; white-space: nowrap; background: #282828; color: white; padding: 10px 0; font-weight: bold; font-size: 0.9rem; letter-spacing: 1px;
+            overflow: hidden; white-space: nowrap; background: #111827; color: white; padding: 10px 0; font-weight: bold; font-size: 0.9rem; letter-spacing: 1px;
           }
           .marquee-text {
             display: inline-block; animation: marquee 15s linear infinite;
@@ -148,31 +148,34 @@ function App() {
       {/* Marquee Header */}
       <div className="marquee-container">
         <div className="marquee-text">
-          🔥 JOLLY AFTER JOLLY DEALS! UP TO 40% OFF ELECTRONICS & APPLIANCES. FREE DELIVERY ON ORDERS OVER $50. SHOP NOW! 🔥
+          🚀 WELCOME TO NEYO55 STORE! UP TO 40% OFF ELECTRONICS & APPLIANCES. FREE DELIVERY ON ORDERS OVER $50. SHOP NOW! 🚀
         </div>
       </div>
 
       {/* Main Navbar */}
       <nav style={{ backgroundColor: '#fff', padding: '1.5rem 2rem', position: 'sticky', top: 0, zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-        <h1 style={{ color: '#f68b1e', margin: 0, fontSize: '2rem', fontWeight: '900' }}>JUMIA⭐</h1>
+        <h1 style={{ color: '#2563eb', margin: 0, fontSize: '2rem', fontWeight: '900' }}>NEYO55 STORE</h1>
         
-        {/* Fake Search Bar */}
+        {/* Search Bar */}
         <div style={{ flex: '0 1 500px', display: 'flex' }}>
           <input type="text" placeholder="Search products, brands and categories" style={{ width: '100%', padding: '0.8rem 1rem', border: '1px solid #ccc', borderRadius: '4px 0 0 4px', outline: 'none' }} />
-          <button style={{ padding: '0.8rem 1.5rem', backgroundColor: '#f68b1e', border: 'none', borderRadius: '0 4px 4px 0', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>SEARCH</button>
+          <button style={{ padding: '0.8rem 1.5rem', backgroundColor: '#2563eb', border: 'none', borderRadius: '0 4px 4px 0', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>SEARCH</button>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          <div style={{ fontWeight: 'bold', color: '#333', fontSize: '1.1rem' }}>
+          <div style={{ fontWeight: '600', color: '#4b5563', fontSize: '1.1rem' }}>
+            Hi, {currentUser} 👋
+          </div>
+          <div style={{ fontWeight: 'bold', color: '#333', fontSize: '1.1rem', backgroundColor: '#f3f4f6', padding: '0.5rem 1rem', borderRadius: '20px' }}>
             🛒 Cart: {cartCount}
           </div>
-          <button onClick={handleCheckout} style={{ padding: '0.8rem 1.5rem', backgroundColor: '#e01a22', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(224, 26, 34, 0.3)' }}>CHECKOUT</button>
+          <button onClick={handleCheckout} style={{ padding: '0.8rem 1.5rem', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(16, 185, 129, 0.3)' }}>CHECKOUT</button>
           <button onClick={handleLogout} style={{ padding: '0.8rem 1.5rem', backgroundColor: '#fff', color: '#333', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>LOGOUT</button>
         </div>
       </nav>
 
       {/* Flash Sales Banner */}
-      <div style={{ maxWidth: '1200px', margin: '2rem auto', backgroundColor: '#e01a22', borderRadius: '8px 8px 0 0', padding: '1rem 2rem', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ maxWidth: '1200px', margin: '2rem auto', backgroundColor: '#ef4444', borderRadius: '8px 8px 0 0', padding: '1rem 2rem', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>⚡ Flash Sales</h2>
         <div style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>Time Left: 16h : 58m : 16s</div>
       </div>
@@ -185,7 +188,7 @@ function App() {
               <div key={product.id} style={{ border: '1px solid #eee', borderRadius: '4px', overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column', transition: 'box-shadow 0.2s', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'} onMouseOut={e => e.currentTarget.style.boxShadow = 'none'}>
                 
                 {/* Discount Tag */}
-                <div style={{ position: 'absolute', top: '10px', right: '10px', backgroundColor: '#feefed', color: '#e01a22', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.9rem' }}>
+                <div style={{ position: 'absolute', top: '10px', right: '10px', backgroundColor: '#fee2e2', color: '#ef4444', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.9rem' }}>
                   {product.discount}
                 </div>
 
@@ -200,10 +203,10 @@ function App() {
                   
                   {/* Progress Bar Fake */}
                   <div style={{ width: '100%', backgroundColor: '#eee', height: '6px', borderRadius: '3px', marginBottom: '1rem' }}>
-                    <div style={{ width: '60%', backgroundColor: '#f68b1e', height: '100%', borderRadius: '3px' }}></div>
+                    <div style={{ width: '60%', backgroundColor: '#2563eb', height: '100%', borderRadius: '3px' }}></div>
                   </div>
 
-                  <button onClick={() => addToCart(product)} style={{ marginTop: 'auto', padding: '0.8rem', backgroundColor: '#f68b1e', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', width: '100%', boxShadow: '0 2px 4px rgba(246, 139, 30, 0.3)' }}>
+                  <button onClick={() => addToCart(product)} style={{ marginTop: 'auto', padding: '0.8rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', width: '100%', transition: 'background-color 0.2s' }}>
                     ADD TO CART
                   </button>
                 </div>
