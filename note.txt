@@ -140,7 +140,9 @@ kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring
 kubectl port-forward svc/rabbitmq-service 15672:15672
 
 kubectl create secret generic postgres-secret --from-literal=postgres-password=SuperSecurePassword123
+
 kubectl rollout restart deployment auth-deployment auth-db-deployment
+
 kubectl get pods
 
 
