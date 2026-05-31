@@ -121,6 +121,10 @@ git commit -m "chore: sync local files with remote"
 # 5. Push everything to GitHub!
 git push origin main
 
+###### To do Roll-Back of the previous commit 
+git revert HEAD --no-edit
+git push origin main
+
 
 ######### commands to run to start the project (Powershell) ########
 minikube start
