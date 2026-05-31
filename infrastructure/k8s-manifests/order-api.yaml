@@ -17,7 +17,7 @@ spec:
       containers:
       - name: order
         # Ensure you replace 'neyo55' with your actual Docker Hub username if different!
-        image: neyo55/order-service:85dc197
+        image: neyo55/order-service:df38cac
         imagePullPolicy: Always
         ports:
         - containerPort: 3003
