@@ -63,7 +63,7 @@ jobs:
       - name: Push Frontend UI & Update Manifest
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/frontend-ui:${{ env.SHORT_SHA }}
-          sed -i "s|image: ${{ secrets.DOCKER_USERNAME }}/frontend-ui:.*|image: ${{ secrets.DOCKER_USERNAME }}/frontend-ui:${{ env.SHORT_SHA }}|g" infrastructure/k8s-manifests/frontend-deployment.yaml
+          sed -i "s|image: ${{ secrets.DOCKER_USERNAME }}/frontend-ui:.*|image: ${{ secrets.DOCKER_USERNAME }}/frontend-ui:${{ env.SHORT_SHA }}|g" infrastructure/k8s-manifests/frontend-ui.yaml
 
       # --- CART SERVICE ---
       - name: Build Cart Service
