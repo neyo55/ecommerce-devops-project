@@ -96,7 +96,11 @@ kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring
 # 3. Access the UI at http://localhost:3000 (username: admin)
 
 #########################################
+## 🛡️ DevSecOps & Pipeline Security
 
+To prevent vulnerable code from reaching production, the CI/CD pipeline integrates **Trivy** for continuous container security scanning. Every Docker image is automatically audited for OS and library vulnerabilities (CVEs) during the GitHub Actions build phase before being pushed to the registry or synced by ArgoCD.
+
+#########################################
 
 ## 📖 Runbooks & Troubleshooting
 

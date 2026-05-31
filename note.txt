@@ -73,6 +73,9 @@ kubectl port-forward svc/rabbitmq-service 15672:15672
 # the web address to view rabbitmq dashboard
 http://localhost:15672
 
+# command to see the order deployment logs
+kubectl logs deployment/order-deployment -f
+
 
 
 ######### commands to run to start the project (Powershell) ########

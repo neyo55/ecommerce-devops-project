@@ -75,7 +75,6 @@ function App() {
     .catch(err => console.error("Error adding to cart:", err));
   };
 
-  // --- NEW CHECKOUT FUNCTION ---
   const handleCheckout = () => {
     if (cartCount === 0) return alert("Your cart is empty!");
     
@@ -87,22 +86,23 @@ function App() {
     })
     .then(res => res.json())
     .then(data => {
-      alert(data.message);
-      setCartCount(0); // Reset UI cart count
+      alert("🎉 " + data.message);
+      setCartCount(0);
     })
     .catch(err => console.error("Error during checkout:", err));
   };
 
   if (!token) {
     return (
-      <div style={{ fontFamily: 'system-ui, sans-serif', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f9fafb' }}>
-        <div style={{ backgroundColor: 'white', padding: '2.5rem', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', width: '100%', maxWidth: '400px' }}>
-          <h2 style={{ textAlign: 'center', color: '#2563eb', marginBottom: '1.5rem' }}>🔐 DevOps Swag Login</h2>
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} style={{ padding: '0.75rem', borderRadius: '6px', border: '1px solid #d1d5db' }} required />
-            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ padding: '0.75rem', borderRadius: '6px', border: '1px solid #d1d5db' }} required />
-            <button type="submit" style={{ padding: '0.75rem', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>Secure Login</button>
-            {authMessage && <p style={{ color: '#ef4444', textAlign: 'center', margin: 0 }}>{authMessage}</p>}
+      <div style={{ fontFamily: 'system-ui, sans-serif', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f3f4f6' }}>
+        <div style={{ backgroundColor: 'white', padding: '3rem', borderRadius: '16px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)', width: '100%', maxWidth: '400px' }}>
+          <h2 style={{ textAlign: 'center', color: '#111827', marginBottom: '0.5rem', fontSize: '2rem' }}>DevOps Swag</h2>
+          <p style={{ textAlign: 'center', color: '#6b7280', marginBottom: '2rem' }}>Sign in to gear up</p>
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+            <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} style={{ padding: '0.85rem', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '1rem' }} required />
+            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} style={{ padding: '0.85rem', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '1rem' }} required />
+            <button type="submit" style={{ padding: '0.85rem', backgroundColor: '#000', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', marginTop: '0.5rem' }}>Secure Login</button>
+            {authMessage && <p style={{ color: '#ef4444', textAlign: 'center', margin: 0, fontWeight: '500' }}>{authMessage}</p>}
           </form>
         </div>
       </div>
@@ -110,39 +110,53 @@ function App() {
   }
 
   return (
-    <div style={{ fontFamily: 'system-ui, sans-serif', padding: '2rem', maxWidth: '900px', margin: '0 auto', backgroundColor: '#f9fafb', minHeight: '100vh' }}>
-      <header style={{ borderBottom: '2px solid #e5e7eb', paddingBottom: '1.5rem', marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 style={{ color: '#2563eb', margin: 0, fontSize: '2.5rem' }}>🛒 DevOps Swag Store</h1>
-          <p style={{ color: '#6b7280', margin: '0.5rem 0 0 0', fontSize: '1.1rem' }}>Fully deployed via GitOps & ArgoCD</p>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ fontSize: '1.25rem', fontWeight: 'bold', backgroundColor: '#e5e7eb', padding: '0.5rem 1rem', borderRadius: '8px' }}>
-            Cart: {cartCount}
-          </div>
-          {/* --- NEW CHECKOUT BUTTON --- */}
-          <button onClick={handleCheckout} style={{ padding: '0.5rem 1rem', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
-            Checkout
-          </button>
-          <button onClick={handleLogout} style={{ padding: '0.5rem 1rem', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
-            Logout
-          </button>
-        </div>
-      </header>
-      
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
-        {products.length === 0 ? <p>Loading products from backend...</p> : 
-          products.map(product => (
-            <div key={product.id} style={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '1.5rem', textAlign: 'center', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
-              <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>{product.icon}</div>
-              <h3 style={{ margin: '0 0 0.5rem 0', color: '#1f2937' }}>{product.name}</h3>
-              <p style={{ margin: 0, fontWeight: 'bold', color: '#10b981', fontSize: '1.25rem' }}>${product.price.toFixed(2)}</p>
-              <button onClick={() => addToCart(product)} style={{ marginTop: '1.5rem', padding: '0.75rem 1.5rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', width: '100%' }}>
-                Add to Cart
-              </button>
+    <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: '#f9fafb', minHeight: '100vh', paddingBottom: '4rem' }}>
+      {/* Navigation */}
+      <nav style={{ backgroundColor: '#fff', borderBottom: '1px solid #e5e7eb', padding: '1rem 2rem', position: 'sticky', top: 0, zIndex: 10 }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h1 style={{ color: '#111827', margin: 0, fontSize: '1.5rem', fontWeight: '800', letterSpacing: '-0.5px' }}>DevOps Swag</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div style={{ fontSize: '1rem', fontWeight: '600', color: '#374151' }}>
+              🛒 Cart ({cartCount})
             </div>
-          ))
-        }
+            <button onClick={handleCheckout} style={{ padding: '0.6rem 1.2rem', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', transition: 'background-color 0.2s' }}>
+              Checkout
+            </button>
+            <button onClick={handleLogout} style={{ padding: '0.6rem 1.2rem', backgroundColor: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>
+              Logout
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Banner */}
+      <div style={{ backgroundColor: '#111827', color: 'white', padding: '4rem 2rem', textAlign: 'center', marginBottom: '3rem' }}>
+        <h2 style={{ fontSize: '3rem', margin: '0 0 1rem 0', fontWeight: '800' }}>Ship Code in Style.</h2>
+        <p style={{ fontSize: '1.25rem', color: '#9ca3af', margin: 0, maxWidth: '600px', marginInline: 'auto' }}>
+          Exclusive gear for platform engineers, SREs, and developers who deploy on Fridays. Fully powered by Kubernetes.
+        </p>
+      </div>
+      
+      {/* Product Grid */}
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
+          {products.length === 0 ? <p style={{ textAlign: 'center', gridColumn: '1/-1', color: '#6b7280' }}>Loading gear from the cluster...</p> : 
+            products.map(product => (
+              <div key={product.id} style={{ backgroundColor: 'white', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ height: '240px', overflow: 'hidden', backgroundColor: '#f3f4f6' }}>
+                  <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+                <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                  <h3 style={{ margin: '0 0 0.5rem 0', color: '#111827', fontSize: '1.25rem' }}>{product.name}</h3>
+                  <p style={{ margin: '0 0 1.5rem 0', fontWeight: '700', color: '#4b5563', fontSize: '1.1rem' }}>${product.price.toFixed(2)}</p>
+                  <button onClick={() => addToCart(product)} style={{ marginTop: 'auto', padding: '0.8rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem', width: '100%', transition: 'background-color 0.2s' }}>
+                    Add to Cart
+                  </button>
+                </div>
+              </div>
+            ))
+          }
+        </div>
       </div>
     </div>
   )
