@@ -136,3 +136,20 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 kubectl create secret generic postgres-secret --from-literal=postgres-password=SuperSecurePassword123
 kubectl rollout restart deployment auth-deployment auth-db-deployment
 kubectl get pods
+
+
+
+
+############## Helm installation ###########
+helm version
+winget install Helm.Helm
+helm version
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+kubectl create namespace monitoring
+
+# command to install Prometheus & Grafana Stack, port forward and password retreival 
+helm install prometheus prometheus-community/kube-prometheus-stack --namespace monitoring
+kubectl get pods -n monitoring
+kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring    (Keep this running in a terminal)
+kubectl --namespace monitoring get secrets prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 -d

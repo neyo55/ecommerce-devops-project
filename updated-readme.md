@@ -56,6 +56,48 @@ To prove the Event-Driven Architecture prevents data loss during an outage:
 4. Revive the workers: `kubectl scale deployment order-deployment --replicas=1`
 5. Watch the Order Service instantly drain the queue and process all pending transactions without a single dropped order.
 
+## 📊 Observability & Monitoring
+
+To ensure cluster health and visualize microservice performance, this project utilizes the industry-standard **Kube-Prometheus-Stack** deployed via **Helm**. 
+
+* **Prometheus:** Continuously scrapes and stores real-time Kubernetes cluster and pod metrics.
+* **Grafana:** Provides rich, pre-built visualizations for CPU, Memory, Network traffic, and Node health.
+* **Alertmanager:** Built-in routing for proactive alerting on cluster anomalies.
+
+### Installation & Setup
+If deploying this cluster from scratch, use the following commands to install Helm and provision the monitoring stack:
+
+```bash
+# 1. Install Helm (Windows example using winget)
+winget install Helm.Helm
+
+# 2. Verify Helm installation
+helm version
+
+# 3. Add the official Prometheus Helm repository
+helm repo add prometheus-community [https://prometheus-community.github.io/helm-charts](https://prometheus-community.github.io/helm-charts)
+helm repo update
+
+# 4. Create a dedicated namespace for observability
+kubectl create namespace monitoring
+
+# 5. Install the Kube-Prometheus-Stack
+helm install prometheus prometheus-community/kube-prometheus-stack --namespace monitoring
+
+Accessing the Grafana Dashboard
+Because security is a priority, Grafana is configured without default passwords. To access the live telemetry:
+
+# 1. Extract and decode the auto-generated secure admin password
+kubectl get secret --namespace monitoring prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 -d
+
+# 2. Open the network tunnel to the cluster
+kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring
+
+# 3. Access the UI at http://localhost:3000 (username: admin)
+
+#########################################
+
+
 ## 📖 Runbooks & Troubleshooting
 
 As part of this project, I maintain a continuous log of K8s/DevOps errors encountered and their technical resolutions. 
@@ -65,7 +107,6 @@ As part of this project, I maintain a continuous log of K8s/DevOps errors encoun
 
 To spin this environment up from scratch on a new machine:
 
-```bash
 # 1. Start the local cluster
 minikube start
 
@@ -93,6 +134,6 @@ kubectl port-forward svc/rabbitmq-service 15672:15672 &
 In a true GitOps environment, the Kubernetes cluster is never modified directly. To perform a rollback, we revert the code in Git, and the cluster automatically self-heals to match the repository.
 1. Introduce a breaking change to the `main` branch (e.g., a broken UI component) and let ArgoCD sync it to production.
 2. Instead of using the ArgoCD UI to rollback (which would cause an auto-sync loop conflict), revert the commit in Git:
-   ```bash
+
    git revert HEAD --no-edit
    git push origin main
