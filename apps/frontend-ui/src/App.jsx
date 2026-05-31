@@ -11,22 +11,18 @@ function App() {
   const [authMessage, setAuthMessage] = useState('');
   const [authSuccess, setAuthSuccess] = useState(false);
   
-  // New States for UI Polish
   const [timeLeft, setTimeLeft] = useState({ hours: 16, minutes: 58, seconds: 16 });
-  const [addedItem, setAddedItem] = useState(null); // Tracks which item was just added
+  const [addedItem, setAddedItem] = useState(null); 
 
-  // --- TIMER LOGIC ---
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         let { hours, minutes, seconds } = prev;
-        if (seconds > 0) {
-          seconds--;
-        } else {
+        if (seconds > 0) { seconds--; } 
+        else {
           seconds = 59;
-          if (minutes > 0) {
-            minutes--;
-          } else {
+          if (minutes > 0) { minutes--; } 
+          else {
             minutes = 59;
             if (hours > 0) hours--;
           }
@@ -37,7 +33,6 @@ function App() {
     return () => clearInterval(timer);
   }, []);
 
-  // --- INITIAL DATA FETCH ---
   useEffect(() => {
     fetch('/api/catalog')
       .then(res => res.json())
@@ -51,9 +46,7 @@ function App() {
           .then(res => res.json())
           .then(data => setCartCount(data.length || 0))
           .catch(err => console.error("Error fetching cart:", err));
-      } catch (e) {
-        console.error("Invalid token format");
-      }
+      } catch (e) { console.error("Invalid token format"); }
     }
   }, [token]);
 
@@ -100,8 +93,6 @@ function App() {
 
   const addToCart = (product) => {
     const payload = JSON.parse(atob(token.split('.')[1]));
-    
-    // UI Feedback: Show "Added!" briefly
     setAddedItem(product.id);
     setTimeout(() => setAddedItem(null), 1500);
 
@@ -131,10 +122,8 @@ function App() {
     .catch(err => console.error("Error during checkout:", err));
   };
 
-  // Format time with leading zeros
   const formatTime = (val) => val.toString().padStart(2, '0');
 
-  // --- AUTHENTICATION SCREEN ---
   if (!token) {
     return (
       <div style={{ fontFamily: 'system-ui, sans-serif', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f5f5f5' }}>
@@ -161,17 +150,18 @@ function App() {
 
   const currentUser = token ? JSON.parse(atob(token.split('.')[1])).username : 'Guest';
 
-  // --- MAIN STOREFRONT ---
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: '#f5f5f5', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       
       <style>
         {`
           @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
-          .marquee-container { overflow: hidden; white-space: nowrap; background: #111827; color: white; padding: 10px 0; font-weight: bold; font-size: 0.9rem; letter-spacing: 1px; }
+          .marquee-container { overflow: hidden; white-space: nowrap; background: #111827; color: white; padding: 8px 0; font-weight: bold; font-size: 0.85rem; letter-spacing: 1px; }
           .marquee-text { display: inline-block; animation: marquee 20s linear infinite; }
           .nav-btn { transition: all 0.2s; }
           .nav-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+          .category-link { color: #4b5563; text-decoration: none; font-size: 0.95rem; font-weight: 500; transition: color 0.2s; cursor: pointer; }
+          .category-link:hover { color: #2563eb; }
         `}
       </style>
 
@@ -183,7 +173,7 @@ function App() {
       </div>
 
       {/* Main Navbar */}
-      <nav style={{ backgroundColor: '#fff', padding: '1.2rem 2rem', position: 'sticky', top: 0, zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+      <nav style={{ backgroundColor: '#fff', padding: '1.2rem 2rem', position: 'sticky', top: 0, zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f3f4f6' }}>
         <h1 style={{ color: '#2563eb', margin: 0, fontSize: '2.2rem', fontWeight: '900', letterSpacing: '-1px' }}>NEYO55<br/><span style={{fontSize: '1.2rem', color: '#111827'}}>STORE</span></h1>
         
         {/* Search Bar */}
@@ -205,7 +195,17 @@ function App() {
         </div>
       </nav>
 
-      {/* Main Content Area (pushes footer down) */}
+      {/* Secondary Categories Ribbon */}
+      <div style={{ backgroundColor: '#fff', padding: '0.8rem 2rem', borderBottom: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', display: 'flex', gap: '2rem', justifyContent: 'center' }}>
+        <span className="category-link">📱 Phones & Tablets</span>
+        <span className="category-link">💻 Computing</span>
+        <span className="category-link">📺 TVs & Audio</span>
+        <span className="category-link">🔌 Appliances</span>
+        <span className="category-link">🎮 Gaming</span>
+        <span className="category-link">⚡ Supermarket</span>
+      </div>
+
+      {/* Main Content Area */}
       <div style={{ flex: 1 }}>
         {/* Flash Sales Banner */}
         <div style={{ maxWidth: '1200px', margin: '2rem auto 0 auto', backgroundColor: '#ef4444', borderRadius: '8px 8px 0 0', padding: '1.2rem 2rem', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -215,11 +215,11 @@ function App() {
           </div>
         </div>
         
-        {/* Product Grid */}
+        {/* Product Grid (Now displaying 6 items) */}
         <div style={{ maxWidth: '1200px', margin: '0 auto 3rem auto', padding: '2rem', backgroundColor: '#fff', borderRadius: '0 0 8px 8px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '2rem' }}>
             {products.length === 0 ? <p style={{ textAlign: 'center', gridColumn: '1/-1', color: '#6b7280' }}>Loading products from the cluster...</p> : 
-              products.map(product => (
+              products.map((product, index) => (
                 <div key={product.id} style={{ border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column', transition: 'all 0.2s', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1)'} onMouseOut={e => e.currentTarget.style.boxShadow = 'none'}>
                   
                   {/* Discount Tag */}
@@ -232,7 +232,13 @@ function App() {
                   </div>
                   
                   <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', flexGrow: 1, backgroundColor: '#f9fafb', borderTop: '1px solid #e5e7eb' }}>
-                    <h3 style={{ margin: '0 0 0.5rem 0', color: '#111827', fontSize: '1.1rem', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{product.name}</h3>
+                    <h3 style={{ margin: '0 0 0.25rem 0', color: '#111827', fontSize: '1.1rem', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{product.name}</h3>
+                    
+                    {/* Star Ratings */}
+                    <div style={{ display: 'flex', alignItems: 'center', color: '#fbbf24', fontSize: '1rem', marginBottom: '0.75rem' }}>
+                      ★★★★★ <span style={{ color: '#9ca3af', marginLeft: '6px', fontSize: '0.85rem' }}>({(124 + index * 17)})</span>
+                    </div>
+
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '1rem' }}>
                       <p style={{ margin: '0', fontWeight: '800', color: '#111827', fontSize: '1.4rem' }}>${product.price.toFixed(2)}</p>
                       <p style={{ margin: '0', color: '#9ca3af', textDecoration: 'line-through', fontSize: '1rem' }}>${product.originalPrice.toFixed(2)}</p>
@@ -240,26 +246,18 @@ function App() {
                     
                     {/* Stock Progress Bar */}
                     <div style={{ width: '100%', backgroundColor: '#e5e7eb', height: '6px', borderRadius: '3px', marginBottom: '1.5rem' }}>
-                      <div style={{ width: '60%', backgroundColor: '#2563eb', height: '100%', borderRadius: '3px' }}></div>
+                      <div style={{ width: `${60 - (index * 5)}%`, backgroundColor: '#2563eb', height: '100%', borderRadius: '3px' }}></div>
                     </div>
 
                     <button 
                       onClick={() => addToCart(product)} 
                       style={{ 
-                        marginTop: 'auto', 
-                        padding: '0.8rem', 
+                        marginTop: 'auto', padding: '0.8rem', 
                         backgroundColor: addedItem === product.id ? '#10b981' : '#2563eb', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '6px', 
-                        cursor: 'pointer', 
-                        fontWeight: 'bold', 
-                        width: '100%', 
-                        transition: 'background-color 0.2s',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        gap: '8px'
+                        color: 'white', border: 'none', borderRadius: '6px', 
+                        cursor: 'pointer', fontWeight: 'bold', width: '100%', 
+                        transition: 'background-color 0.2s', display: 'flex',
+                        justifyContent: 'center', alignItems: 'center', gap: '8px'
                       }}
                     >
                       {addedItem === product.id ? 'ADDED! ✅' : 'ADD TO CART 🛒'}
@@ -273,11 +271,11 @@ function App() {
       </div>
 
       {/* Footer */}
-      <footer style={{ backgroundColor: '#111827', color: '#9ca3af', padding: '2rem', textAlign: 'center', marginTop: 'auto' }}>
+      <footer style={{ backgroundColor: '#111827', color: '#9ca3af', padding: '3rem 2rem 2rem 2rem', textAlign: 'center', marginTop: 'auto' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <h2 style={{ color: 'white', margin: 0, letterSpacing: '2px' }}>NEYO55 STORE</h2>
-          <p style={{ margin: 0, fontSize: '0.9rem' }}>Fully powered by Kubernetes, GitOps, and Microservices.</p>
-          <div style={{ borderTop: '1px solid #374151', margin: '1rem 0', paddingTop: '1rem', fontSize: '0.85rem' }}>
+          <h2 style={{ color: 'white', margin: 0, letterSpacing: '2px', fontSize: '1.5rem' }}>NEYO55 STORE</h2>
+          <p style={{ margin: 0, fontSize: '0.95rem', color: '#d1d5db' }}>Fully powered by Kubernetes, GitOps, and Microservices.</p>
+          <div style={{ borderTop: '1px solid #374151', margin: '2rem 0 1rem 0', paddingTop: '1.5rem', fontSize: '0.85rem' }}>
             &copy; {new Date().getFullYear()} Neyo55 Store. All rights reserved.
           </div>
         </div>

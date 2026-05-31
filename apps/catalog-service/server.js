@@ -4,7 +4,7 @@ const PORT = process.env.PORT || 3001;
 
 app.use(express.json());
 
-// Neyo55 Store Inventory
+// Neyo55 Store Inventory (Now with 6 Items)
 const products = [
   { 
     id: 1, 
@@ -37,6 +37,22 @@ const products = [
     originalPrice: 310.00,
     discount: '-19%',
     image: 'https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?q=80&w=400&auto=format&fit=crop' 
+  },
+  { 
+    id: 5, 
+    name: 'Sony WH-1000XM5 Headphones', 
+    price: 348.00, 
+    originalPrice: 398.00,
+    discount: '-12%',
+    image: 'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?q=80&w=400&auto=format&fit=crop' 
+  },
+  { 
+    id: 6, 
+    name: 'Apple MacBook Pro M3 14"', 
+    price: 1599.00, 
+    originalPrice: 1799.00,
+    discount: '-11%',
+    image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=400&auto=format&fit=crop' 
   }
 ];
 
