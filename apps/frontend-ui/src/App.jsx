@@ -113,7 +113,7 @@ function App() {
     <div style={{ fontFamily: 'system-ui, sans-serif', padding: '2rem', maxWidth: '900px', margin: '0 auto', backgroundColor: '#f9fafb', minHeight: '100vh' }}>
       <header style={{ borderBottom: '2px solid #e5e7eb', paddingBottom: '1.5rem', marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ color: '#ef4444', margin: 0, fontSize: '2.5rem' }}>🚨 CRITICAL ERROR: DATABASE DOWN 🚨</h1>
+          <h1 style={{ color: '#2563eb', margin: 0, fontSize: '2.5rem' }}>🛒 DevOps Swag Store</h1>
           <p style={{ color: '#6b7280', margin: '0.5rem 0 0 0', fontSize: '1.1rem' }}>Fully deployed via GitOps & ArgoCD</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
