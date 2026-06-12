@@ -11,8 +11,10 @@ spec:
       app: auth
   template:
     metadata:
+      annotations:
+        linkerd.io/inject: enabled
       labels:
-        app: auth
+        app: auth      
     spec:
       containers:
       - name: auth

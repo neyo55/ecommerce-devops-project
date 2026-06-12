@@ -11,8 +11,10 @@ spec:
       app: frontend
   template:
     metadata:
+      annotations:
+        linkerd.io/inject: enabled
       labels:
-        app: frontend
+        app: frontend      
     spec:
       containers:
       - name: frontend

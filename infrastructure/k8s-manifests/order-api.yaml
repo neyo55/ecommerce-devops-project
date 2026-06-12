@@ -11,8 +11,10 @@ spec:
       app: order
   template:
     metadata:
+      annotations:
+        linkerd.io/inject: enabled
       labels:
-        app: order
+        app: order      
     spec:
       containers:
       - name: order
