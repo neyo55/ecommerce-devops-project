@@ -648,3 +648,44 @@ linkerd check --pre
 
 ```
 
+Ah, of course! Because we wiped the cluster completely clean with `minikube delete`, the Kubernetes Gateway API definitions got swept away with everything else.
+
+Since this is a brand-new cluster canvas, we just need to re-apply that quick prerequisite before Linkerd will let us install its definitions.
+
+Let's knock this out real quick.
+
+### Step 1: Re-install the Kubernetes Gateway API
+
+Run the prerequisite command to teach your fresh cluster the Gateway API structure:
+
+```bash
+kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
+
+```
+
+### Step 2: Install Linkerd CRDs
+
+Now that the Gateway API is present, the CRD installation will go through flawlessly:
+
+```bash
+linkerd install --crds | kubectl apply -f -
+
+```
+
+### Step 3: Install the Linkerd Control Plane
+
+Now, spin up the main Service Mesh control plane with the root override flag for your Docker runtime:
+
+```bash
+linkerd install --set proxyInit.runAsRoot=true | kubectl apply -f -
+
+```
+
+### Step 4: Verify and Inject the Sidecars
+
+Give the control plane about 60 seconds to find its footing, verify it with `linkerd check`, and then force your microservices to pick up their secure `2/2` sidecars by kicking off a rolling restart:
+
+```bash
+kubectl rollout restart deployment --all
+
+```
