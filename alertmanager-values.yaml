@@ -8,9 +8,17 @@ alertmanager:
       smtp_auth_password: 'xuxz eoyb qglq atlc'
       smtp_require_tls: true
     route:
-      receiver: 'null' # We tell the route to use the null receiver
+      group_by: ['namespace', 'alertname']
+      group_wait: 10s
+      receiver: 'blackhole' # 1. The default route is now a true black hole
+      routes:
+        - matchers:
+            - namespace="default" # 2. BUT, if the alert is from our apps...
+          receiver: 'email-receiver' # 3. ...route it to the email inbox!
     receivers:
-      - name: 'null'   # But we hijack the 'null' receiver to be your email!
+      - name: 'blackhole'
+        # Notice there is no email config here. Alerts sent here simply vanish.
+      - name: 'email-receiver'
         email_configs:
           - to: 'kbneyo55@gmail.com'
             send_resolved: true

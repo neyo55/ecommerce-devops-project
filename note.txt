@@ -139,10 +139,18 @@ kubectl port-forward svc/argocd-server -n argocd 8081:443
 kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring
 kubectl port-forward svc/rabbitmq-service 15672:15672
 
+kubectl port-forward pod/prometheus-prometheus-kube-prometheus-prometheus-0 9090:9090 -n monitoring
+kubectl port-forward pod/alertmanager-prometheus-kube-prometheus-alertmanager-0 9093:9093 -n monitoring
+
 kubectl create secret generic postgres-secret --from-literal=postgres-password=SuperSecurePassword123
 
 kubectl rollout restart deployment auth-deployment auth-db-deployment
 kubectl rollout restart deployment auth-deployment
+
+# command for the frontend test login details each time i run the program newly due to no Persistent volume (PVC)
+curl -X POST http://127.0.0.1/api/auth/register \
+-H "Content-Type: application/json" \
+-d '{"username": "homeuser", "password": "mypassword123"}'
 
 
 kubectl get pods
@@ -165,7 +173,9 @@ kubectl get pods -n monitoring
 kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring    (Keep this running in a terminal)
 kubectl --namespace monitoring get secrets prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 -d
 
+# Command to push update on alertmanager after setting the alertmanager yaml settings
 helm upgrade prometheus prometheus-community/kube-prometheus-stack --namespace monitoring -f alertmanager-values.yaml
+
 
 ############ Grafana setup using Helm ###########
 # Add the official Grafana Helm repository
@@ -182,7 +192,7 @@ kubectl get pods -n monitoring | grep loki
 ############################################################################
 
 
-# command for the test login each time i run the program newly due to no Persistent volume (PVC)
+# command for the frontend test login details each time i run the program newly due to no Persistent volume (PVC)
 curl -X POST http://127.0.0.1/api/auth/register \
 -H "Content-Type: application/json" \
 -d '{"username": "homeuser", "password": "mypassword123"}'
@@ -190,6 +200,4 @@ curl -X POST http://127.0.0.1/api/auth/register \
 
 
 
-kubectl port-forward pod/prometheus-prometheus-kube-prometheus-prometheus-0 9090:9090 -n monitoring
-kubectl port-forward pod/alertmanager-prometheus-kube-prometheus-alertmanager-0 9093:9093 -n monitoring
 

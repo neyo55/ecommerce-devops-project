@@ -141,3 +141,46 @@ In a true GitOps environment, the Kubernetes cluster is never modified directly.
 
    git revert HEAD --no-edit
    git push origin main
+
+
+###################################
+
+### 🚨 Automated Alerting & Incident Response (Prometheus + Alertmanager)
+
+This project features a production-grade incident response pipeline designed to alert developers of critical failures while aggressively filtering out infrastructure noise to prevent "alert fatigue."
+
+**The Observability Pipeline:**
+1. **Prometheus** continuously scrapes metrics from the Kubernetes cluster.
+2. If a pod crashes or a deployment fails, Prometheus flags it as `PENDING`.
+3. After a 15-minute grace period (to account for temporary network blips), the alert is escalated to `FIRING`.
+4. **Alertmanager** receives the payload, evaluates routing rules, and dispatches an automated email to the on-call engineer via Google SMTP.
+5. Once **ArgoCD** self-heals the cluster, Alertmanager automatically sends a follow-up `[RESOLVED]` email.
+
+**Signal vs. Noise Routing:**
+To ensure engineers only receive actionable alerts, Alertmanager is configured with strict routing rules. Alerts originating from infrastructure namespaces (like `kube-system` or `monitoring`) are routed to a null `blackhole` receiver. Only alerts originating from our custom microservices in the `default` namespace are routed to the email inbox.
+
+**Configuration Snippet (`alertmanager-values.yaml`):**
+```yaml
+alertmanager:
+  config:
+    global:
+      resolve_timeout: 5m
+      smtp_smarthost: 'smtp.gmail.com:587'
+      smtp_from: 'alerts@yourdomain.com'
+      smtp_auth_username: 'alerts@yourdomain.com'
+      smtp_auth_password: '<APP_PASSWORD>'
+      smtp_require_tls: true
+    route:
+      group_by: ['namespace', 'alertname']
+      group_wait: 10s
+      receiver: 'blackhole' # Default route for noisy infrastructure alerts
+      routes:
+        - matchers:
+            - namespace="default" # Critical application alerts
+          receiver: 'email-receiver' 
+    receivers:
+      - name: 'blackhole'
+      - name: 'email-receiver'
+        email_configs:
+          - to: 'oncall-engineer@yourdomain.com'
+            send_resolved: true

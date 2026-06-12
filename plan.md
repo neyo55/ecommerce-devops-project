@@ -593,3 +593,58 @@ While we let the clock tick down on this chaos experiment, we have two Senior-le
 
 1. **Implement a Service Mesh** (Installing Linkerd to automatically encrypt all internal traffic between your microservices using mTLS).
 2. **Application Unit Testing** (Injecting Jest tests into your GitHub Actions pipeline so bad code can't even be merged).
+
+
+
+Welcome to the world of Zero-Trust Security!
+
+Right now, your microservices trust each other implicitly. If a hacker somehow breached your `cart-service`, they could easily send malicious requests to your `auth-db` because the network is wide open and unencrypted.
+
+A **Service Mesh** fixes this by injecting a tiny "proxy" container (a sidecar) next to every single one of your microservices. These proxies intercept all traffic, encrypt it using mTLS (Mutual TLS), and verify the identity of the sender before letting the traffic through.
+
+The best part? Linkerd does this entirely at the infrastructure level. We don't have to rewrite a single line of your Node.js application code!
+
+Here is how we get the Linkerd CLI installed on your Windows Git Bash terminal and verify your cluster is ready.
+
+### Step 1: Download the Linkerd CLI
+
+Run this command in your terminal to download the official installation script and run it:
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh
+
+```
+
+### Step 2: Add Linkerd to Your System Path
+
+The script will download the CLI into a hidden folder in your home directory. To tell your terminal where to find it, run this command:
+
+```bash
+export PATH=$PATH:$HOME/.linkerd2/bin
+
+```
+
+*(Note: To make this permanent so you don't have to type it every time you restart Git Bash, you can also run `echo "export PATH=\$PATH:\$HOME/.linkerd2/bin" >> ~/.bashrc`)*
+
+### Step 3: Verify the Installation
+
+Let's make sure the CLI is installed and talking to your computer correctly:
+
+```bash
+linkerd version
+
+```
+
+*You should see a "Client version" printed. Don't worry if it says "Server version: unavailable"—we haven't installed it on the cluster yet!*
+
+### Step 4: The "Pre-Flight" Check
+
+Linkerd is famous for its incredible developer experience. Before it lets you install the control plane, it has a built-in command that thoroughly scans your Kubernetes cluster to make sure you have enough CPU, memory, and permissions to run the mesh.
+
+Run this command:
+
+```bash
+linkerd check --pre
+
+```
+
