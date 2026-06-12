@@ -5,16 +5,12 @@ alertmanager:
       smtp_smarthost: 'smtp.gmail.com:587'
       smtp_from: 'aesgroupalfa@gmail.com'
       smtp_auth_username: 'aesgroupalfa@gmail.com'
-      smtp_auth_password: 'xuxz eoyb qglq atlc' # Do not include spaces
+      smtp_auth_password: 'xuxz eoyb qglq atlc'
       smtp_require_tls: true
     route:
-      group_by: ['namespace', 'alertname']
-      group_wait: 10s # Fast wait time for testing
-      group_interval: 5m
-      repeat_interval: 12h
-      receiver: 'email-receiver'
+      receiver: 'null' # We tell the route to use the null receiver
     receivers:
-      - name: 'email-receiver'
+      - name: 'null'   # But we hijack the 'null' receiver to be your email!
         email_configs:
           - to: 'kbneyo55@gmail.com'
             send_resolved: true
