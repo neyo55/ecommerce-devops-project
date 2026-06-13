@@ -20,7 +20,7 @@ spec:
       containers:
       - name: cart
         # Make sure to replace neyo55 with your actual Docker Hub username!
-        image: neyo55/cart-service:888af0d
+        image: neyo55/cart-service:df4b597
         imagePullPolicy: Always
         env:
         - name: REDIS_URL
