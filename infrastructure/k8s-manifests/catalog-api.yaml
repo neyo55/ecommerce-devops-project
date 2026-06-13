@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: catalog
-        image: neyo55/catalog-service:df4b597
+        image: neyo55/catalog-service:e6759f9
         imagePullPolicy: Always
         ports:
         - containerPort: 3001
