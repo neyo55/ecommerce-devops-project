@@ -1,0 +1,45 @@
+---
+# 1. Define the Server Target
+# This tells Linkerd to take control of the Auth pod's incoming network port
+apiVersion: policy.linkerd.io/v1beta1
+kind: Server
+metadata:
+  name: auth-secure-server
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: auth
+  port: 3002 # <-- IMPORTANT: If your Auth Node.js app runs on a different port (like 8080), change this number!
+  proxyProtocol: HTTP/1
+
+---
+# 2. Define the Cryptographic Identity Rule
+# This creates an identity group that only includes pods with valid Linkerd certificates
+apiVersion: policy.linkerd.io/v1alpha1
+kind: MeshTLSAuthentication
+metadata:
+  name: valid-mesh-clients
+  namespace: default
+spec:
+  identities:
+    - "*" # The wildcard strictly requires a valid Linkerd certificate from ANY meshed pod
+
+---
+# 3. Apply the Bouncer (Authorization Policy)
+# This binds the Identity Rule to the Server Target. 
+# "If you want to talk to Auth, you MUST have a valid mesh identity."
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: lock-down-auth
+  namespace: default
+spec:
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
+    name: auth-secure-server
+  requiredAuthenticationRefs:
+    - group: policy.linkerd.io
+      kind: MeshTLSAuthentication
+      name: valid-mesh-clients

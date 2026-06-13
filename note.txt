@@ -17,11 +17,14 @@ docker run -p 3001:3001 catalog-service:1.0
 # 1. Start your local Kubernetes cluster
 minikube start
 
+# commad to delete Minikube
+minikube delete
+
 # 2. Load the Node.js backend image into Minikube
 minikube image load catalog-service:1.0
 
 # 3. Load the React frontend image into Minikube
-minikube image load frontend-ui:1.0
+minikube image load frontend-ui:1.0 
 
 # Command to enable ingress service 
 minikube addons enable ingress
@@ -147,7 +150,8 @@ git push origin main
 ######### commands to run to start the project (Powershell) ########
 minikube start
 minikube start --cpus=4 --memory=6144
-minikube tunnel
+minikube tunnel    (if this command fails, then use the ingress port forward below)
+kubectl port-forward -n ingress-nginx svc/ingress-nginx-controller 8083:80
 
 # run this in vscode 
 kubectl port-forward svc/argocd-server -n argocd 8081:443
@@ -168,6 +172,10 @@ kubectl rollout restart deployment auth-deployment
 
 # command for the frontend test login details each time i run the program newly due to no Persistent volume (PVC)
 curl -X POST http://127.0.0.1/api/auth/register \
+-H "Content-Type: application/json" \
+-d '{"username": "homeuser", "password": "mypassword123"}'
+
+curl -X POST http://127.0.0.1:8083/api/auth/register \
 -H "Content-Type: application/json" \
 -d '{"username": "homeuser", "password": "mypassword123"}'
 
@@ -219,6 +227,11 @@ curl -X POST http://127.0.0.1/api/auth/register \
 -d '{"username": "homeuser", "password": "mypassword123"}'
 
 
+curl -X POST http://127.0.0.1:8083/api/auth/register \
+-H "Content-Type: application/json" \
+-d '{"username": "homeuser", "password": "mypassword123"}'
+
+
 
 
 
@@ -239,6 +252,7 @@ linkerd viz dashboard
 
 # Command to get existing namespaces
 kubectl get ns
+kubectl get svc
 kubectl get applications -n argocd
 
 
@@ -272,3 +286,9 @@ spec:
     kind: NetworkAuthentication
     name: allow-cluster-network
 EOF
+
+
+
+
+
+kubectl port-forward svc/frontend-service 8083:80
