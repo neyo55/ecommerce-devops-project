@@ -184,3 +184,226 @@ alertmanager:
         email_configs:
           - to: 'oncall-engineer@yourdomain.com'
             send_resolved: true
+
+###############################
+
+---
+
+# 🌐 Zero-Trust Service Mesh Implementation Guide (Linkerd)
+
+This document details the architecture, installation configuration, and GitOps lifecycle of the **Linkerd Service Mesh** deployed across our e-commerce microservices fleet.
+
+---
+
+## 🏛️ Architecture Overview
+
+To enforce a **Zero-Trust Security model**, this project utilizes Linkerd to inject an ultralightweight sidecar proxy (written in Rust) alongside every microservice container.
+
+### Core Capabilities Enabled:
+
+* **Mutual TLS (mTLS) by Default:** All pod-to-pod TCP traffic is automatically encrypted transparently without modifying application code.
+* **Cryptographic Identity Verification:** Pods use short-lived certificates issued by the Linkerd Identity Service to authenticate peer services before accepting requests.
+* **Automatic Observability:** Telemetry data (Success Rates, Latencies, RPS) is intercepted at the container boundary and piped to an isolated telemetry plane (`linkerd-viz`).
+
+---
+
+## 💻 Cluster Resource Prerequisites
+
+Due to the infrastructure footprint of running multiple databases, message brokers, GitOps engines (ArgoCD), and dual observability stacks (Prometheus/Grafana + Linkerd Viz), the local cluster requires a strict hardware allocation profile to prevent `OOMKilled` pod thrashing.
+
+```bash
+# Minimum resource profile required to stabilize control planes and sidecars
+minikube start --cpus=4 --memory=6144
+minikube tunnel
+
+```
+
+---
+
+## 🛠️ Phase 1: Infrastructure & Prerequisite Setup
+
+### 1. Install Kubernetes Gateway API
+
+Modern Linkerd distributions leverage the Kubernetes Gateway API standard for advanced traffic routing. These custom resource definitions (CRDs) must exist prior to installing the mesh.
+
+```bash
+kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
+
+```
+
+### 2. Validate Cluster Pre-flight Conditions
+
+```bash
+linkerd check --pre
+
+```
+
+---
+
+## 🧠 Phase 2: Mesh Control Plane Installation
+
+Because our development environment utilizes the **Docker container runtime backend**, Linkerd's temporary initialization container requires root privileges to manipulate `iptables` rules inside the pod network namespace.
+
+### 1. Install Core CRDs
+
+```bash
+linkerd install --crds | kubectl apply -f -
+
+```
+
+### 2. Install Control Plane (with Runtime Overrides)
+
+```bash
+linkerd install --set proxyInit.runAsRoot=true | kubectl apply -f -
+
+```
+
+### 3. Verify Control Plane Readiness
+
+```bash
+linkerd check
+
+```
+
+---
+
+## 🔄 Phase 3: Declarative GitOps Sidecar Injection
+
+To adhere strictly to GitOps principles and prevent configuration drift within ArgoCD, sidecars are injected declaratively using Kubernetes metadata annotations within the application deployment files rather than imperatively using the CLI.
+
+### Manifest Pattern Example (`auth-api.yaml`):
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-deployment
+  labels:
+    app: auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth
+  template:
+    metadata:
+      annotations:
+        linkerd.io/inject: enabled # <-- Triggers automatic proxy injection
+      labels:
+        app: auth                  # Ensure label matchers remain exact
+    spec:
+      containers:
+      - name: auth
+        image: neyo55/auth-service:latest
+
+```
+
+### Lifecycle Sync & Rolling Rollout
+
+Once changes are pushed to GitHub, ArgoCD pulls the update. If a manual synchronization or manual kick-start is required to roll the sidecars into an active cluster:
+
+```bash
+# Force a zero-downtime rolling restart to pull down proxy sidecars
+kubectl rollout restart deployment
+
+```
+
+Verify the payload changes from a single application container to a dual mesh layout:
+
+```bash
+kubectl get pods -w
+# Expected output: READY status escalates from 1/1 to 2/2 (App + Proxy)
+
+```
+
+---
+
+## 📊 Phase 4: Observability & Network Telemetry Engine
+
+The `linkerd-viz` extension spins up a localized metrics API server, time-series data storage, and web dashboard instances to visually verify mTLS pathways.
+
+### 1. Deploy Telemetry Extension
+
+```bash
+linkerd viz install | kubectl apply -f -
+
+```
+
+### 2. Run Telemetry Health Checks
+
+```bash
+linkerd viz check
+
+```
+
+### 3. Expose Live Topology Dashboard
+
+```bash
+linkerd viz dashboard
+
+```
+
+> 💡 **SRE Note:** Navigate to `http://localhost:50750/namespaces/default` to view real-time request volume, HTTP success rates, and P50/P95 latency maps across all meshed services.
+
+---
+
+## 📕 SRE Disaster Recovery Runbook
+
+### Symptom: `CreateContainerConfigError` during GitOps Restore
+
+* **Root Cause:** Wiping the cluster deletes local, uncommitted secrets required by data layers (`auth-db`, etc.) during startup.
+* **Resolution:** Re-create missing environment configuration targets before syncing the fleet:
+```bash
+kubectl create secret generic postgres-secret --from-literal=postgres-password=super_secret_db_pass
+
+```
+
+
+
+### Symptom: `ImagePullBackOff` during Init phase
+
+* **Root Cause:** Network constraints pulling the underlying Linkerd proxy images for the first time inside Minikube.
+* **Resolution:** No action required. Kubernetes contains built-in exponential backoff retry loops that will naturally stabilize into a `Running` state within 1–2 minutes.
+
+### Symptom: `etcdserver: request timed out` or Cluster 500 API Errors
+
+* **Root Cause:** Host memory exhaustion leading to internal state corruption of the `etcd` key-value store.
+* **Resolution:** Execute a hard purge and leverage GitOps declaration to reconstitute state:
+```bash
+minikube delete
+minikube start --cpus=4 --memory=6144
+# Re-apply ArgoCD core definitions to let the ecosystem auto-heal
+
+```
+
+
+
+---
+
+
+
+
+
+## 🛡️ The Importance and Function of Linkerd
+
+When you deploy microservices on standard Kubernetes, they talk to each other over the internal network using plain, unencrypted HTTP. Furthermore, if you want to know exactly how many requests are failing or how long they take, you usually have to write hundreds of lines of custom tracking code inside your Node.js applications.
+
+Linkerd (a Service Mesh) acts as an invisible network layer that solves these problems automatically. By injecting an ultralight proxy container (a "sidecar") next to every single one of your Node.js apps, it intercepts all inbound and outbound network traffic.
+
+This gives your cluster three massive superpowers:
+
+Security (Zero-Touch mTLS): Linkerd automatically acts as its own Certificate Authority. It issues short-lived cryptographic certificates to your pods and silently upgrades all plain HTTP traffic to highly encrypted Mutual TLS (mTLS). You get bank-level internal security without rewriting any application code.
+
+Deep Observability: Because the proxies sit between your applications, they see every single packet of data. They automatically calculate the "Golden Signals" (Success Rates, Requests Per Second, and Latencies) and feed them directly to Grafana.
+
+Reliability: The proxies can intelligently route traffic, load-balance requests across your pods based on real-time latency, and automatically retry failed requests before your user ever sees an error screen.
+
+## 🔒 The Final Implementation: Zero-Trust Authorization Policies
+Right now, your cluster is encrypting all traffic between your meshed pods. However, your services are currently operating under a "Permissive" state.
+
+This means if a rogue pod or a hacker somehow got inside your cluster without a Linkerd sidecar, your auth or order services would currently "downgrade" and still accept their unencrypted requests.
+
+To achieve a true Zero-Trust Architecture, the final thing we need to implement is Linkerd Authorization Policies.
+
+We will create declarative YAML files that apply Server and AuthorizationPolicy rules to your microservices. These rules act like a digital bouncer: they will explicitly instruct your pods to instantly drop and reject any incoming traffic that does not possess a valid Linkerd mTLS cryptographic identity.
+

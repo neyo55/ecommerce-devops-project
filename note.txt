@@ -97,6 +97,7 @@ minikube start
 # Run this in powershell after the below commands has been run 
 minikube service frontend-service
 
+
 ######## Command to access Argocd login page ###################
 # run this in VSCode terminal
 kubectl port-forward svc/argocd-server -n argocd 8080:443    or 8081:443
@@ -152,6 +153,9 @@ minikube tunnel
 kubectl port-forward svc/argocd-server -n argocd 8081:443
 kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring
 kubectl port-forward svc/rabbitmq-service 15672:15672
+linkerd viz dashboard
+
+kubectl get pods -A --watch
 
 kubectl port-forward pod/prometheus-prometheus-kube-prometheus-prometheus-0 9090:9090 -n monitoring
 kubectl port-forward pod/alertmanager-prometheus-kube-prometheus-alertmanager-0 9093:9093 -n monitoring
@@ -178,13 +182,15 @@ kubectl get pods --watch
 helm version
 winget install Helm.Helm
 helm version
+
+
+# command to install Prometheus & Grafana Stack using helm, port forward and password retreival 
+kubectl create namespace monitoring
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
-kubectl create namespace monitoring
-
-# command to install Prometheus & Grafana Stack, port forward and password retreival 
 helm install prometheus prometheus-community/kube-prometheus-stack --namespace monitoring
 kubectl get pods -n monitoring
+kubectl get pods -n monitoring --watch
 kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring    (Keep this running in a terminal)
 kubectl --namespace monitoring get secrets prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 -d
 
@@ -224,11 +230,45 @@ linkerd check
 kubectl rollout restart deployment
 kubectl get pods --watch
 
-
+# Command to install linkerd viz (The Telemetry Layer)
 linkerd viz install | kubectl apply -f -
 linkerd viz check
 kubectl get pods -n linkerd-viz --watch
+linkerd viz dashboard
+
+
+# Command to get existing namespaces
+kubectl get ns
+kubectl get applications -n argocd
 
 
 
 
+
+
+
+cat <<EOF | kubectl apply -f -
+apiVersion: policy.linkerd.io/v1alpha1
+kind: NetworkAuthentication
+metadata:
+  name: allow-cluster-network
+  namespace: linkerd-viz
+spec:
+  networks:
+  - cidr: 0.0.0.0/0
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: grafana-prometheus-access
+  namespace: linkerd-viz
+spec:
+  targetRef:
+    group: policy.linkerd.io
+    kind: Server
+    name: prometheus-admin
+  requiredAuthenticationRefs:
+  - group: policy.linkerd.io
+    kind: NetworkAuthentication
+    name: allow-cluster-network
+EOF
