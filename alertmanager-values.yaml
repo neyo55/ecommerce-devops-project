@@ -5,7 +5,7 @@ alertmanager:
       smtp_smarthost: 'smtp.gmail.com:587'
       smtp_from: 'aesgroupalfa@gmail.com'
       smtp_auth_username: 'aesgroupalfa@gmail.com'
-      smtp_auth_password: 'xuxz eoyb qglq atlc'
+      smtp_auth_password: 'abcd efgh ijkl mnop'   # please dont commit real password to git, use secrets instead
       smtp_require_tls: true
     route:
       group_by: ['namespace', 'alertname']

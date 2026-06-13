@@ -249,6 +249,11 @@ linkerd viz check
 kubectl get pods -n linkerd-viz --watch
 linkerd viz dashboard
 
+export PATH=$PATH:$HOME/.linkerd2/bin
+kubectl get deployment ingress-nginx-controller -n ingress-nginx -o yaml | linkerd inject - | kubectl apply -f -
+kubectl rollout restart deployment ingress-nginx-controller -n ingress-nginx
+kubectl get pods -n ingress-nginx
+
 
 # Command to get existing namespaces
 kubectl get ns
